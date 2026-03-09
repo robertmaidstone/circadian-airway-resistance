@@ -3,29 +3,17 @@ library(openxlsx)
 library(grid)
 library(patchwork)
 library(ggtext)
+library(drc)
 
-read.xlsx("~/Amlan/Flexivent_Jan25/AC_FVData_Complete.xlsx",sheet=5,fillMergedCells = TRUE) -> LF_data
 
-###
+# load data ---------------------------------------------------------------
+setwd("~/Amlan/AirwayResistance/")
+source("functions.R")
+read.xlsx("data/AC_FVData_Complete.xlsx",sheet=5,fillMergedCells = TRUE) -> LF_data
+
 LF_data %>% filter(Mch_conc!=0) -> LF_data
 
-# LF_data %>% filter(Mch_conc!=0) %>%
-#   mutate(Value=log10(Value)) -> LF_data
-
-LF_data %>% 
-  group_by(ZT,Genotype,Treatment,Mch_conc) %>%
-  mutate(Med_Value=mean(Value,na.rm=T)) %>%
-  dplyr::select(-Sample,-Value) %>%
-  unique %>% ungroup -> t_data
-
-t_data %>%
-  #filter(Genotype=="WT") %>%
-  mutate(ZT=as.character(ZT)) %>%
-  ggplot(aes(x=Mch_conc,y=Med_Value)) + geom_line(aes(linetype = Treatment, color = ZT))+
-  geom_point(aes(color = ZT))+
-  scale_x_continuous(breaks=c(0,3.12,6.25,12.5,25,50))+
-  theme_bw() +
-  facet_grid(~Genotype)
+# anovas replace with tests as discussed ----------------------------------
 
 lm(Value~Treatment*ZT,data=LF_data%>% filter(Mch_conc==50,Genotype=="WT")) %>% anova
 lm(Value~Treatment*ZT,data=LF_data%>% filter(Mch_conc==50,Genotype=="KO")) %>% anova
@@ -33,115 +21,21 @@ lm(Value~Treatment*ZT,data=LF_data%>% filter(Mch_conc==50,Genotype=="KO")) %>% a
 lm(Value~ZT,data=LF_data%>% filter(Mch_conc==50,Genotype=="WT",Treatment=="HDM")) %>% anova
 lm(Value~ZT,data=LF_data%>% filter(Mch_conc==50,Genotype=="KO",Treatment=="HDM")) %>% anova
 
-library(drc)
+# dose response model -----------------------------------------------------
 
-# Fit dose response model
-LF_data$Group <- interaction(LF_data$Genotype, LF_data$Treatment,LF_data$ZT)
-
-
-model <- drm(Value ~ Mch_conc, data = LF_data,
-             curveid = Group,
-             fct = LL.4(names = c("Slope", "Lower", "Upper", "EC50")))
-
-summary(model)
-
-
-# Extract coefficients
-params <- coef(model)
-
-# Convert to data frame
-param_df <- as.data.frame(params)
-
-# Add group names as a column
-param_df$Group <- rownames(param_df)
-
-# Separate Group into Time and Condition
-param_df <- param_df %>%
-  separate(Group, into = c("Genotype", "Treatment","Time"), sep = "\\.") %>%
-  separate(Genotype, into = c("Parameter","Genotype"), sep = ":")
-
-
-param_df$Time <- factor(param_df$Time)
-param_df$Treatment <- factor(param_df$Treatment)
-param_df$Genotype <- factor(param_df$Genotype)
+# param_formodel <- dr_fit(LF_data) #uncomment these lines to rerun dr curve fits - warning takes some time
+# save(param_formodel,file = "data/drcmodelparams_flex.RData")
+load("data/drcmodelparams_flex.RData")
 
 # ANOVA for Emax
-
-aov_emax <- aov(params ~ Time * Treatment, data = param_df %>% filter(Genotype=="WT",Parameter=="Upper"))
-summary(aov_emax)
+anova_pvals_upper <- dr_anova(param_formodel,"Upper","log10(params) ~ ZT * Treatment")
 
 # ANOVA for Slope
-aov_slope <-  aov(params ~ Time * Treatment, data = param_df %>% filter(Genotype=="WT",Parameter=="Slope"))
-summary(aov_slope)
+anova_pvals_slope <- dr_anova(param_formodel,"Slope","log10(-params) ~ ZT * Treatment")
 
-#######
+# plotting dose response curve --------------------------------------------
 
-# Fit dose response model
-LF_data$Group <- LF_data$Sample
-
-
-model <- drm(Value ~ Mch_conc, data = LF_data,
-             curveid = Group,
-             fct = LL.4(names = c("Slope", "Lower", "Upper", "EC50")))
-
-summary(model)
-
-
-# Extract coefficients
-params <- coef(model)
-
-# Convert to data frame
-param_df <- as.data.frame(params)
-
-# Add group names as a column
-param_df$Group <- rownames(param_df)
-
-# Separate Group into Time and Condition
-param_df <- param_df %>%
-  separate(Group, into = c("Parameter","Sample"), sep = ":")
-
-param_df %>% merge(LF_data %>% dplyr::select(Sample,Genotype,Treatment,ZT) %>% unique,by="Sample")-> param_formodel
-
-param_formodel$ZT <- factor(param_formodel$ZT)
-param_formodel$Treatment <- factor(param_formodel$Treatment)
-param_formodel$Genotype <- factor(param_formodel$Genotype)
-
-save(param_formodel,file = "drcmodelparams.RData")
-
-# ANOVA for Emax
-param_formodel %>% filter(Genotype=="WT",Parameter=="Upper") %>% dplyr::select(params) %>% unlist %>% log10 %>% hist
-aov_emax <- aov(log10(params) ~ ZT * Treatment, data = param_formodel %>% filter(Genotype=="WT",Parameter=="Upper"))
-summary(aov_emax)
-plot(aov_emax)
-
-param_formodel %>% filter(Genotype=="KO",Parameter=="Upper") %>% dplyr::select(params) %>% unlist %>% log10 %>% hist
-aov_emax <- aov(log10(params) ~ ZT * Treatment, data = param_formodel %>% filter(Genotype=="KO",Parameter=="Upper"))
-summary(aov_emax)
-plot(aov_emax)
-
-ggplot(param_formodel %>% filter(Parameter == "Upper", Genotype == "KO"),
-       aes(x = ZT, y = log10(params), color = Treatment)) +
-  geom_point(position = position_jitter(width = 0.2)) +
-  stat_summary(fun = mean, geom = "line", aes(group = Treatment)) +
-  labs(title = "Emax by ZT and Treatment (KO)")
-
-# ANOVA for Slope
-param_formodel %>% filter(Genotype=="WT",Parameter=="Slope") %>% dplyr::select(params) %>% unlist %>% (function(x){log10((x*-1))}) %>%hist
-aov_slope <-  aov(log10(-params) ~ ZT * Treatment, data = param_formodel %>% filter(Genotype=="WT",Parameter=="Slope"))
-summary(aov_slope)
-plot(aov_slope)
-
-param_formodel %>% filter(Genotype=="KO",Parameter=="Slope") %>% dplyr::select(params) %>% unlist %>% (function(x){log10((x*-1))}) %>%hist
-aov_slope <-  aov(log10(-params) ~ ZT * Treatment, data = param_formodel %>% filter(Genotype=="KO",Parameter=="Slope"))
-summary(aov_slope)
-plot(aov_slope)
-
-ggplot(param_formodel %>% filter(Parameter == "Slope", Genotype == "KO"),
-       aes(x = ZT, y = log10(-params), color = Treatment)) +
-  geom_point(position = position_jitter(width = 0.2)) +
-  stat_summary(fun = mean, geom = "line", aes(group = Treatment)) +
-  labs(title = "Slope by ZT and Treatment (KO)")
-
+dr_plot(LF_data,anova_pvals_slope,anova_pvals_upper)
 
 gen_labels <- c("CCSP-Reverbα WT","CCSP-Reverbα KO")
 sig_text <- "Max Dose Treatment **"
@@ -190,26 +84,3 @@ grid.draw(
 )
 grid.text( expression("Methacholine Concentration (mg.mL"^"-1"*")"), y = unit(0.03, "npc"), gp = gpar(fontsize = 10))
 dev.off()
-
-
-#####
-## time difference in HDM separetly for WT and KO
-# ANOVA for Emax
-param_formodel %>% filter(Genotype=="WT",Parameter=="Upper",Treatment=="HDM") %>% dplyr::select(params) %>% unlist %>% log10 %>% hist
-aov_emax <- aov(log10(params) ~ ZT, data = param_formodel %>% filter(Genotype=="WT",Parameter=="Upper",Treatment=="HDM"))
-summary(aov_emax)
-plot(aov_emax)
-
-param_formodel %>% filter(Genotype=="KO",Parameter=="Upper",Treatment=="HDM") %>% dplyr::select(params) %>% unlist %>% log10 %>% hist
-aov_emax <- aov(log10(params) ~ ZT, data = param_formodel %>% filter(Genotype=="KO",Parameter=="Upper",Treatment=="HDM"))
-summary(aov_emax)
-plot(aov_emax)
-
-# ANOVA for Slope
-param_formodel %>% filter(Genotype=="WT",Parameter=="Slope",Treatment=="HDM") %>% dplyr::select(params) %>% unlist %>% (function(x){log10((x*-1))}) %>%hist
-aov_slope <-  aov(log10(-params) ~ ZT, data = param_formodel %>% filter(Genotype=="WT",Parameter=="Slope",Treatment=="HDM"))
-summary(aov_slope)
-
-param_formodel %>% filter(Genotype=="KO",Parameter=="Slope",Treatment=="HDM") %>% dplyr::select(params) %>% unlist %>% (function(x){log10((x*-1))}) %>%hist
-aov_slope <-  aov(log10(-params) ~ ZT, data = param_formodel %>% filter(Genotype=="KO",Parameter=="Slope",Treatment=="HDM"))
-summary(aov_slope)
