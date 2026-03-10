@@ -15,11 +15,16 @@ LF_data %>% filter(Mch_conc!=0) -> LF_data
 
 # anovas replace with tests as discussed ----------------------------------
 
-lm(Value~Treatment*ZT,data=LF_data%>% filter(Mch_conc==50,Genotype=="WT")) %>% anova
-lm(Value~Treatment*ZT,data=LF_data%>% filter(Mch_conc==50,Genotype=="KO")) %>% anova
+library(lme4)
+model <- lmer(Value ~ ZT + Mch_conc + (1 | Sample), data = LF_data%>% filter(Treatment=="HDM",Genotype=="WT"))
+anova(model)
 
-lm(Value~ZT,data=LF_data%>% filter(Mch_conc==50,Genotype=="WT",Treatment=="HDM")) %>% anova
-lm(Value~ZT,data=LF_data%>% filter(Mch_conc==50,Genotype=="KO",Treatment=="HDM")) %>% anova
+
+lm(Value~ZT+Mch_conc,data=LF_data%>% filter(Treatment=="HDM",Genotype=="WT")) %>% anova
+lm(Value~Treatment*ZT,data=LF_data%>% filter(Genotype=="KO")) %>% anova
+
+lm(Value~ZT+Mch_conc,data=LF_data%>% filter(Genotype=="WT",Treatment=="HDM")) %>% anova
+lm(Value~ZT,data=LF_data%>% filter(Genotype=="KO",Treatment=="HDM")) %>% anova
 
 # dose response model -----------------------------------------------------
 
