@@ -3,8 +3,8 @@
 # function to fit dose response curve and manipulate parameters -------------------------------------
 
 dr_fit <- function(LFdata) {
-  LF_data$Group <- LF_data$Sample
-  
+  #LF_data$Group <- LF_data$Sample
+  LF_data$Group <- interaction(LF_data$Sample,LF_data$ZT)
   
   model <- drm(
     Value ~ Mch_conc,
@@ -18,11 +18,11 @@ dr_fit <- function(LFdata) {
   param_df$Group <- rownames(param_df)
   param_df <- param_df %>%
     separate(Group,
-             into = c("Parameter", "Sample"),
+             into = c("Parameter", "Group"),
              sep = ":")
   
-  param_df %>% merge(LF_data %>% dplyr::select(Sample, Genotype, Treatment, ZT) %>% unique,
-                     by = "Sample") -> param_formodel
+  param_df %>% merge(LF_data %>% dplyr::select(Group, Genotype, Treatment, ZT) %>% unique,
+                     by = "Group") -> param_formodel
   
   param_formodel$ZT <- factor(param_formodel$ZT)
   param_formodel$Treatment <- factor(param_formodel$Treatment)
@@ -163,57 +163,79 @@ fit_lrtest <- function(df) {
   lmtest::lrtest(nls_model, lm_model)$`Pr(>Chisq)`[2]
 }
 
-plot_rhy_funcs <- function(df,predict_values,annot_pvals,sig_line_pvals,Tr){
-  col_vec <- c("#0072B2","#E69F00")
-  y_limit <- c(-6,50)
-  gen_labels <- c("CCSP-Reverbα WT","CCSP-Reverbα KO")
+plot_rhy_funcs <- function(df, predict_values, annot_pvals, sig_line_pvals,
+                           Tr, y_axis = TRUE, legend = TRUE, y_lab, y_lim) {
   
+  col_vec    <- c("#0072B2", "#E69F00")
+  gen_labels <- c("CCSP-Reverbα WT", "CCSP-Reverbα KO")
+  y_limit    <- y_lim
+  # --- 1. Prepare significance text -----------------------------------------
   sig_text <- extract_sig_text(annot_pvals, Tr, prefix = "")
-  
-  pred_df <- merge(
-    predict_values,
-    sig_line_pvals %>%
-      pivot_longer(
-        cols = -1,
-        names_to = "Treatment",
-        values_to = "Linetype"
-      ),
-    by = c("Treatment", "Genotype"),
-    all.x = TRUE
-  ) %>%
-    mutate(Linetype = Linetype < 0.05)
-  
-  sum_data %>%
-    mutate(Genotype=factor(Genotype,levels=c("WT","KO"),labels=gen_labels)) %>%
-    filter(Treatment==Tr) %>%
-    ggplot(aes(x = ZT, y = AUC, colour = Genotype)) +
+  # --- 2. Prepare prediction dataframe --------------------------------------
+  pred_df <- predict_values %>%
+    left_join(
+      sig_line_pvals %>%
+        pivot_longer(cols = -1, names_to = "Treatment", values_to = "Linetype"),
+      by = c("Treatment", "Genotype")
+    ) %>%
+    mutate(
+      Linetype = Linetype < 0.05,
+      Genotype = factor(Genotype, levels = c("WT", "KO"), labels = gen_labels)
+    )
+  # --- 3. Prepare observed data ---------------------------------------------
+  df_plot <- df %>%
+    filter(Treatment == Tr) %>%
+    mutate(Genotype = factor(Genotype, levels = c("WT", "KO"), labels = gen_labels))
+  # --- 4. Build the base plot ------------------------------------------------
+  p <- ggplot(df_plot, aes(x = ZT, y = AUC, colour = Genotype)) +
     geom_point() +
-    geom_ribbon(aes(ymax=Predicted_Response_UCI,ymin=Predicted_Response_LCI,y=NULL,fill=Genotype,colour=NULL),
-                data=pred_df %>%filter(Treatment==Tr) %>% mutate(Genotype=factor(Genotype,levels=c("WT","KO"),
-                                                                                 labels=gen_labels)),size=1,alpha=0.2) +
-    geom_line(aes(y=Predicted_Response,linetype=Linetype),
-              data=pred_df %>%filter(Treatment==Tr) %>% mutate(Genotype=factor(Genotype,levels=c("WT","KO"),
-                                                                               labels=gen_labels)),size=1) +
-    ylab("AUC Airway Resistance R<sub>rs</sub>(cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)") + scale_colour_manual(values=col_vec) + scale_fill_manual(values=col_vec) +
-    scale_x_continuous(breaks=c(0,6,12,18,24))+
-    scale_linetype_manual(values=c("dashed","solid"))+
+    geom_ribbon(
+      data = pred_df %>% filter(Treatment == Tr),
+      aes(ymax = Predicted_Response_UCI,
+          ymin = Predicted_Response_LCI,
+          y=NULL,
+          fill = Genotype,
+          colour = NULL),
+      alpha = 0.2
+    ) +
+    geom_line(
+      data = pred_df %>% filter(Treatment == Tr),
+      aes(y = Predicted_Response, linetype = Linetype),
+      size = 1
+    ) +
+    scale_colour_manual(values = col_vec) +
+    scale_fill_manual(values = col_vec) +
+    scale_linetype_manual(values = c("dashed", "solid"), guide = "none") +
+    scale_x_continuous(breaks = c(0, 6, 12, 18, 24)) +
+    guides(linetype = "none") +
+    ylab(y_lab) +
+    ggtitle(Tr) +
+    annotate("text", x = 1, y = max(y_limit), label = sig_text,
+             hjust = 0, vjust = 1, size = 4) +
+    ylim(y_limit) +
     theme_bw() +
-    theme(legend.position = "none",
-          axis.title.y = element_markdown()) +
-    ggtitle(Tr)+
-    annotate("text", x = 1, y = max(y_limit), label = sig_text, hjust = 0, vjust = 1, size = 4)+
-    ylim(y_limit)-> p1
-  return(p1)
+    theme(
+      axis.title.y = element_markdown(),
+      legend.position = "none"
+    )
+  # --- 5. Legend logic -------------------------------------------------------
+  if (legend) {
+    p <- p + theme(
+      legend.position = c(0.75, 0.9),
+      legend.title = element_blank(),
+      legend.text = element_markdown(),
+      legend.background = element_blank()
+    )
+  }
+  # --- 6. Y-axis logic -------------------------------------------------------
+  if (!y_axis) {
+    p <- p + theme(axis.title.y = element_blank())
+  }
+  return(p)
 }
 
 
-predict_values<- merge(predict_values,list_out$loglik_pvals%>% 
-                         pivot_longer(cols = -1,names_to = "Treatment",values_to = "Linetype"),
-                       by=c("Treatment","Genotype"),all.x=TRUE) %>%
-  mutate(Linetype=Linetype<0.05)
-
-
-rhy_plot<-function(LF_data){
+rhy_plot<-function(LF_data,Type,y_lim){
   treatments <- c("PBS", "HDM")
   genotypes  <- c("WT", "KO")
   list_out <- list()
@@ -224,11 +246,22 @@ rhy_plot<-function(LF_data){
     mutate(Value=log10(Value)) %>%
     group_by(Sample,ZT,Genotype,Treatment) %>%
     mutate(Max_Value=max(Value,na.rm=T)) %>%
-    mutate(AUC=sum(diff(Mch_conc)*(Value[-1]+Value[-5])/2)) %>%
+    mutate(Min_Value=min(Value,na.rm=T)) %>%
+    mutate(AUC = sum(diff(Mch_conc) * (Value[-1] + Value[-length(Value)]) / 2)) %>%
     dplyr::select(Sample,Max_Value,AUC) %>%
-    #mutate(AUC=Max_Value) %>%
-    unique %>% ungroup -> sum_data
+    distinct %>% ungroup -> sum_data
   
+  if(Type=="Max"){
+    sum_data <- sum_data %>% mutate(AUC=Max_Value)
+    y_lab <- "Max Airway Resistance R<sub>rs</sub>(cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)"
+  }else if(Type=="Min"){
+    sum_data <- sum_data %>% mutate(AUC=Min_Value)
+    y_lab<-"Min Airway Resistance R<sub>rs</sub>(cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)"
+  }else if(Type=="AUC"){
+    y_lab<-"AUC Airway Resistance R<sub>rs</sub>(cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)"
+  }else{
+    stop("Error type not recognised")
+  }
   ## nls model fitting
   pval_mat <- lapply(treatments, function(trt) {
     df_sub <- sum_data %>% dplyr::filter(Treatment == trt)
@@ -237,7 +270,12 @@ rhy_plot<-function(LF_data){
   })
   list_out[["nls_pvals"]] <- do.call(cbind, pval_mat)
   colnames(list_out[["nls_pvals"]]) <- treatments
-  list_out[["nls_pvals"]]<-as.data.frame(list_out[["nls_pvals"]]) %>% mutate(Variable=rownames(list_out[["nls_pvals"]]))
+  list_out[["nls_pvals"]]<-as.data.frame(list_out[["nls_pvals"]]) %>% mutate(Variable=rownames(list_out[["nls_pvals"]])) %>%
+    mutate(Variable= dplyr::case_when(
+      Variable =="A1" ~ "Amplitude",
+      Variable =="phi1" ~ "Phase",
+      Variable =="I1" ~ "Mesor"
+    ))
   
   ## log likelihood test comparing rhythmic to constant
   results <- expand.grid(Genotype = genotypes,
@@ -269,10 +307,13 @@ rhy_plot<-function(LF_data){
   predict_values$Predicted_Response <- pred_resp$fit[,1]
   predict_values$Predicted_Response_LCI <- pred_resp$fit[,2]
   predict_values$Predicted_Response_UCI <- pred_resp$fit[,3]
-  
   ##
-  list_out[["plot_pbs"]] <- plot_rhy_funcs(sum_data,predict_values,annot_pvals = list_out[["nls_pvals"]],sig_line_pvals = list_out[["loglik_pvals"]],"PBS")
-  list_out[["plot_hdm"]] <- plot_rhy_funcs(sum_data,predict_values,annot_pvals = list_out[["nls_pvals"]],sig_line_pvals = list_out[["loglik_pvals"]],"HDM")
-  
+  list_out[["plot_pbs"]] <- plot_rhy_funcs(sum_data,predict_values,
+                                           annot_pvals = list_out[["nls_pvals"]],sig_line_pvals = list_out[["loglik_pvals"]],
+                                           "PBS",legend=FALSE,y_lab=y_lab,y_lim=y_lim)
+  list_out[["plot_hdm"]] <- plot_rhy_funcs(sum_data,predict_values,
+                                           annot_pvals = list_out[["nls_pvals"]],sig_line_pvals = list_out[["loglik_pvals"]],
+                                           "HDM",y_axis=FALSE,y_lab=y_lab,y_lim=y_lim)
+  list_out$combined <- list_out$plot_pbs + list_out$plot_hdm
   return(list_out)
 }

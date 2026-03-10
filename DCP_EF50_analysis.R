@@ -9,9 +9,20 @@ library(lme4)
 # load data ---------------------------------------------------------------
 setwd("~/Amlan/AirwayResistance/")
 source("functions.R")
-read.xlsx("data/AC_FVData_Complete.xlsx",sheet=5,fillMergedCells = TRUE) -> LF_data
 
-LF_data %>% filter(Mch_conc!=0) -> LF_data
+read.xlsx("data/LungFunctionMasterDataSet.xlsx",sheet=2) -> animal_data
+read.xlsx("data/LungFunctionMasterDataSet.xlsx",sheet=1,fillMergedCells = TRUE) -> LF_data
+###
+LF_data %>% filter(Parameter=="DCP_EF50") %>% pivot_longer(cols=4:39,names_to = "Animal.ID") %>%
+  group_by(`Animal.ID`,ZT) %>%
+  filter(Mch_Conc!=0) %>%
+  #mutate(value=log10(value)) %>%
+  merge(animal_data,by="Animal.ID")-> LF_data
+
+LF_data %>% rename(Sample=Animal.ID,Mch_conc=Mch_Conc,Value=value) %>%
+  filter(Parameter=="DCP_EF50") %>%
+  dplyr::select(-Parameter,-Cull_time) %>%
+  dplyr::mutate(Genotype=ifelse(Genotype=="HET","KO","WT"))-> LF_data
 
 # anovas replace with tests as discussed ----------------------------------
 
@@ -27,9 +38,9 @@ lm(Value~ZT,data=LF_data%>% filter(Genotype=="KO",Treatment=="HDM")) %>% anova
 
 # dose response model -----------------------------------------------------
 
-# param_formodel <- dr_fit(LF_data) #uncomment these lines to rerun dr curve fits - warning takes some time
-# save(param_formodel,file = "data/drcmodelparams_flex.RData")
-load("data/drcmodelparams_flex.RData")
+param_formodel <- dr_fit(LF_data) #uncomment these lines to rerun dr curve fits - warning takes some time
+save(param_formodel,file = "data/drcmodelparams_ef50.RData")
+load("data/drcmodelparams_ef50.RData")
 
 anova_pvals_upper <- dr_anova(param_formodel,"Upper","log10(params) ~ ZT * Treatment")
 
