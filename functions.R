@@ -90,7 +90,7 @@ extract_sig_text <- function(df, Gen, prefix = "Upper") {
   sigp %>%
     dplyr::mutate(
       stars = p_to_stars(.data[[Gen]]),
-      text  = paste0(prefix, " ", Variable, " ", stars)
+      text  = paste0(prefix, Variable, " ", stars)
     ) %>%
     dplyr::pull(text) %>%
     paste(collapse = "\n")
@@ -112,8 +112,8 @@ LF_data %>%
   unique %>% ungroup -> t_data
 
 for(Gen in c("WT","KO")){
-  upper_text <- extract_sig_text(anova_pvals_upper, Gen, prefix = "Upper")
-  slope_text <- extract_sig_text(anova_pvals_slope, Gen, prefix = "Slope")
+  upper_text <- extract_sig_text(anova_pvals_upper, Gen, prefix = "Upper ")
+  slope_text <- extract_sig_text(anova_pvals_slope, Gen, prefix = "Slope ")
   
   sig_text <- paste(upper_text, slope_text, sep = "\n")
   
@@ -138,4 +138,141 @@ t_data %>%
 }
 
   return(p_WT|p_KO)
+}
+
+
+fit_nls_model <- function(df) {
+  nls(
+    AUC ~ I + A * sin(2*pi/24*ZT + phi) +
+      (Genotype=="KO")*(I1 + A1 * sin(2*pi/24*ZT + phi1)),
+    data = df,
+    start = list(A = 1, phi = 0, A1 = 0.1, phi1 = 0.1, I = 0, I1 = 0)
+  )
+}
+
+fit_lrtest <- function(df) {
+  nls_model <- nls(
+    AUC ~ I + A * sin(2*pi/24*ZT + phi),
+    data = df,
+    start = list(A = 1, phi = 0, I = 0)
+  )
+  
+  lm_model <- lm(AUC ~ 1, data = df)
+  
+  # return the LR test p-value
+  lmtest::lrtest(nls_model, lm_model)$`Pr(>Chisq)`[2]
+}
+
+plot_rhy_funcs <- function(df,predict_values,annot_pvals,sig_line_pvals,Tr){
+  col_vec <- c("#0072B2","#E69F00")
+  y_limit <- c(-6,50)
+  gen_labels <- c("CCSP-Reverbα WT","CCSP-Reverbα KO")
+  
+  sig_text <- extract_sig_text(annot_pvals, Tr, prefix = "")
+  
+  pred_df <- merge(
+    predict_values,
+    sig_line_pvals %>%
+      pivot_longer(
+        cols = -1,
+        names_to = "Treatment",
+        values_to = "Linetype"
+      ),
+    by = c("Treatment", "Genotype"),
+    all.x = TRUE
+  ) %>%
+    mutate(Linetype = Linetype < 0.05)
+  
+  sum_data %>%
+    mutate(Genotype=factor(Genotype,levels=c("WT","KO"),labels=gen_labels)) %>%
+    filter(Treatment==Tr) %>%
+    ggplot(aes(x = ZT, y = AUC, colour = Genotype)) +
+    geom_point() +
+    geom_ribbon(aes(ymax=Predicted_Response_UCI,ymin=Predicted_Response_LCI,y=NULL,fill=Genotype,colour=NULL),
+                data=pred_df %>%filter(Treatment==Tr) %>% mutate(Genotype=factor(Genotype,levels=c("WT","KO"),
+                                                                                 labels=gen_labels)),size=1,alpha=0.2) +
+    geom_line(aes(y=Predicted_Response,linetype=Linetype),
+              data=pred_df %>%filter(Treatment==Tr) %>% mutate(Genotype=factor(Genotype,levels=c("WT","KO"),
+                                                                               labels=gen_labels)),size=1) +
+    ylab("AUC Airway Resistance R<sub>rs</sub>(cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)") + scale_colour_manual(values=col_vec) + scale_fill_manual(values=col_vec) +
+    scale_x_continuous(breaks=c(0,6,12,18,24))+
+    scale_linetype_manual(values=c("dashed","solid"))+
+    theme_bw() +
+    theme(legend.position = "none",
+          axis.title.y = element_markdown()) +
+    ggtitle(Tr)+
+    annotate("text", x = 1, y = max(y_limit), label = sig_text, hjust = 0, vjust = 1, size = 4)+
+    ylim(y_limit)-> p1
+  return(p1)
+}
+
+
+predict_values<- merge(predict_values,list_out$loglik_pvals%>% 
+                         pivot_longer(cols = -1,names_to = "Treatment",values_to = "Linetype"),
+                       by=c("Treatment","Genotype"),all.x=TRUE) %>%
+  mutate(Linetype=Linetype<0.05)
+
+
+rhy_plot<-function(LF_data){
+  treatments <- c("PBS", "HDM")
+  genotypes  <- c("WT", "KO")
+  list_out <- list()
+  
+  ## data manip
+  
+  LF_data %>% 
+    mutate(Value=log10(Value)) %>%
+    group_by(Sample,ZT,Genotype,Treatment) %>%
+    mutate(Max_Value=max(Value,na.rm=T)) %>%
+    mutate(AUC=sum(diff(Mch_conc)*(Value[-1]+Value[-5])/2)) %>%
+    dplyr::select(Sample,Max_Value,AUC) %>%
+    #mutate(AUC=Max_Value) %>%
+    unique %>% ungroup -> sum_data
+  
+  ## nls model fitting
+  pval_mat <- lapply(treatments, function(trt) {
+    df_sub <- sum_data %>% dplyr::filter(Treatment == trt)
+    model  <- fit_nls_model(df_sub)
+    summary(model)$parameters[c("A1","phi1","I1"), "Pr(>|t|)"]
+  })
+  list_out[["nls_pvals"]] <- do.call(cbind, pval_mat)
+  colnames(list_out[["nls_pvals"]]) <- treatments
+  list_out[["nls_pvals"]]<-as.data.frame(list_out[["nls_pvals"]]) %>% mutate(Variable=rownames(list_out[["nls_pvals"]]))
+  
+  ## log likelihood test comparing rhythmic to constant
+  results <- expand.grid(Genotype = genotypes,
+                         Treatment = treatments,
+                         stringsAsFactors = FALSE)
+  
+  results$p_value <- mapply(function(g, t) {
+    df_sub <- sum_data %>% 
+      dplyr::filter(Genotype == g, Treatment == t)
+    
+    fit_lrtest(df_sub)
+  }, results$Genotype, results$Treatment)
+  results %>% pivot_wider(names_from = Treatment,values_from = p_value) %>%
+    as_data_frame()-> results 
+  list_out[["loglik_pvals"]] <- results
+  
+  ## plotting
+  
+  lm(AUC~1+Genotype*Treatment*sin(2*pi/24*ZT) + Genotype*Treatment*cos(2*pi/24*ZT)+Genotype*Treatment,data=sum_data) -> lm_sGAW
+  
+  predict_values <- expand.grid(
+    ZT = seq(from=0,to=24,length.out=12),
+    Treatment = unique(sum_data$Treatment),
+    Genotype = unique(sum_data$Genotype)
+    #Animal.ID = unique(sum_data_sGAW$Animal.ID)
+  )
+  
+  pred_resp <- predict.lm(lm_sGAW, newdata = predict_values, se.fit=TRUE, interval="confidence", level=0.95)
+  predict_values$Predicted_Response <- pred_resp$fit[,1]
+  predict_values$Predicted_Response_LCI <- pred_resp$fit[,2]
+  predict_values$Predicted_Response_UCI <- pred_resp$fit[,3]
+  
+  ##
+  list_out[["plot_pbs"]] <- plot_rhy_funcs(sum_data,predict_values,annot_pvals = list_out[["nls_pvals"]],sig_line_pvals = list_out[["loglik_pvals"]],"PBS")
+  list_out[["plot_hdm"]] <- plot_rhy_funcs(sum_data,predict_values,annot_pvals = list_out[["nls_pvals"]],sig_line_pvals = list_out[["loglik_pvals"]],"HDM")
+  
+  return(list_out)
 }
