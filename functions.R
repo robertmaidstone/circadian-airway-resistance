@@ -98,7 +98,7 @@ extract_sig_text <- function(df, Gen, prefix = "Upper") {
 
 # dose response curve plot ------------------------------------------------
 
-dr_plot <- function(LF_data,anova_pvals_slope,anova_pvals_upper){
+dr_plot <- function(LF_data,anova_pvals_slope,anova_pvals_upper,y_lim,y_lab){
 
 anova_pvals_slope$Variable <- c("ZT","Treatment","Interaction")
 anova_pvals_upper$Variable <- c("ZT","Treatment","Interaction")
@@ -124,15 +124,15 @@ t_data %>%
   geom_point(aes(color = ZT))+
   scale_x_continuous(breaks=c(0,3.12,6.25,12.5,25,50))+
   theme_bw()+
-  ylab("Maximum Airway Resistance R<sub>rs</sub>(cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)") +
-  ylim(c(0.5,6))+
+  ylab(y_lab) +
+  ylim(y_lim)+
   theme(legend.position = "none",
         axis.title.x = element_blank(),
         axis.title.y = element_markdown(),
         plot.title = element_markdown(),
         axis.text.x = element_text(angle = 45, hjust = 1))+
   scale_color_manual(values = c("#0072B2","#E69F00","#D55E00", "#009E73")) +
-  annotate("text", x = 1, y = 6, label = sig_text, hjust = 0, vjust = 1, size = 4)+
+  annotate("text", x = 1, y = max(y_lim), label = sig_text, hjust = 0, vjust = 1, size = 4)+
   ggtitle(gen_labels[which(Gen==c("WT","KO"))])-> p1
  assign(paste0("p_",Gen),value = p1)
 }

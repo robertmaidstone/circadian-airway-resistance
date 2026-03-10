@@ -37,11 +37,11 @@ anova_pvals_slope <- dr_anova(param_formodel,"Slope","log10(-params) ~ ZT * Trea
 
 # plotting dose response curve --------------------------------------------
 
-dr_plot(LF_data,anova_pvals_slope,anova_pvals_upper)
+dr_plot(LF_data,anova_pvals_slope,anova_pvals_upper,c(0.5,6),y_lab="Maximum Airway Resistance R<sub>rs</sub>(cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)")
 
 png("plots/flex_meth_dose_response.png", width = 2400, height = 1500, res = 300)  # adjust size/res as needed
 grid.draw(
-  dr_plot(LF_data,anova_pvals_slope,anova_pvals_upper)
+  dr_plot(LF_data,anova_pvals_slope,anova_pvals_upper,c(0.5,6),y_lab="Maximum Airway Resistance R<sub>rs</sub>(cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)")
 )
 grid.text( expression("Methacholine Concentration (mg.mL"^"-1"*")"), y = unit(0.03, "npc"), gp = gpar(fontsize = 10))
 dev.off()
