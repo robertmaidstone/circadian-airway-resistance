@@ -201,7 +201,7 @@ plot_rhy_funcs <- function(df, predict_values, annot_pvals, sig_line_pvals,
     geom_line(
       data = pred_df %>% filter(Treatment == Tr),
       aes(y = Predicted_Response, linetype = Linetype),
-      size = 1
+      linewidth = 1
     ) +
     scale_colour_manual(values = col_vec) +
     scale_fill_manual(values = col_vec) +
@@ -244,13 +244,14 @@ rhy_plot<-function(LF_data,Type,y_lim){
   
   LF_data %>% 
     mutate(Value=log10(Value)) %>%
+    arrange(across(all_of(c("Sample", "ZT", "Genotype", "Treatment"))), Mch_conc) %>%
     group_by(Sample,ZT,Genotype,Treatment) %>%
     mutate(Max_Value=max(Value,na.rm=T)) %>%
     mutate(Min_Value=min(Value,na.rm=T)) %>%
     mutate(AUC = sum(diff(Mch_conc) * (Value[-1] + Value[-length(Value)]) / 2)) %>%
+    #mutate(AUC = sum(diff(Mch_conc) * (Value[-1] + Value[-4]) / 2,na.rm=T)) %>%
     dplyr::select(Sample,Max_Value,AUC) %>%
     distinct %>% ungroup -> sum_data
-  
   if(Type=="Max"){
     sum_data <- sum_data %>% mutate(AUC=Max_Value)
     y_lab <- "Max Airway Resistance R<sub>rs</sub>(cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)"
@@ -289,7 +290,7 @@ rhy_plot<-function(LF_data,Type,y_lim){
     fit_lrtest(df_sub)
   }, results$Genotype, results$Treatment)
   results %>% pivot_wider(names_from = Treatment,values_from = p_value) %>%
-    as_data_frame()-> results 
+    as.data.frame()-> results 
   list_out[["loglik_pvals"]] <- results
   
   ## plotting

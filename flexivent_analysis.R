@@ -51,12 +51,12 @@ dev.off()
 
 rhy_plot(LF_data,"AUC",y_lim=c(-6,50)) -> analysis_out
 
-p_auc <- analysis_out[["plot_pbs"]] + analysis_out[["plot_hdm"]]
+p_auc <- analysis_out$combined
 ggsave(p_auc,filename="plots/flex_AUC.png",width=8,height=5)
 
 # Max sinusoidal analysis -----------------------------------------------------
 
 rhy_plot(LF_data,"Max",y_lim=c(-.1,1.3)) -> analysis_out
 
-p_max <- analysis_out[["plot_pbs"]] + analysis_out[["plot_hdm"]]
+p_max <- analysis_out$combined
 ggsave(p_max,filename="plots/flex_max.png",width=8,height=5)

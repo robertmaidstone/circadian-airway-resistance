@@ -38,8 +38,8 @@ lm(Value~ZT,data=LF_data%>% filter(Genotype=="KO",Treatment=="HDM")) %>% anova
 
 # dose response model -----------------------------------------------------
 
-param_formodel <- dr_fit(LF_data) #uncomment these lines to rerun dr curve fits - warning takes some time
-save(param_formodel,file = "data/drcmodelparams_ef50.RData")
+# param_formodel <- dr_fit(LF_data) #uncomment these lines to rerun dr curve fits - warning takes some time
+# save(param_formodel,file = "data/drcmodelparams_ef50.RData")
 load("data/drcmodelparams_ef50.RData")
 
 anova_pvals_upper <- dr_anova(param_formodel,"Upper","log10(params+1) ~ ZT * Treatment")
@@ -48,7 +48,7 @@ anova_pvals_slope <- dr_anova(param_formodel,"Slope","params ~ ZT * Treatment")
 
 # plotting dose response curve --------------------------------------------
 
-dr_plot(LF_data,anova_pvals_slope,anova_pvals_upper,c(1,2.75),y_lab="Median EF50 (ml.sec<sup>-1</sup>)")
+dr_plot(LF_data,anova_pvals_slope,anova_pvals_upper,c(-.1,.5),y_lab="Median EF50 (ml.sec<sup>-1</sup>)")
 
 png("plots/ef50_meth_dose_response.png", width = 2400, height = 1500, res = 300)  # adjust size/res as needed
 grid.draw(
@@ -60,14 +60,16 @@ dev.off()
 
 # AUC sinusoidal analysis -----------------------------------------------------
 
-rhy_plot(LF_data,"AUC",y_lim=c(-6,50)) -> analysis_out
+rhy_plot(LF_data,"AUC",y_lim=c(-11,15)) -> analysis_out
 
-p_auc <- analysis_out[["plot_pbs"]] + analysis_out[["plot_hdm"]]
-ggsave(p_auc,filename="plots/flex_AUC.png",width=8,height=5)
+analysis_out$combined
+p_auc <- analysis_out$combined
+ggsave(p_auc,filename="plots/EF50_AUC.png",width=8,height=5)
 
 # Max sinusoidal analysis -----------------------------------------------------
 
 rhy_plot(LF_data,"Max",y_lim=c(-.1,1.3)) -> analysis_out
 
+analysis_out$combined
 p_max <- analysis_out[["plot_pbs"]] + analysis_out[["plot_hdm"]]
-ggsave(p_max,filename="plots/flex_max.png",width=8,height=5)
+ggsave(p_max,filename="plots/EF50_max.png",width=8,height=5)
