@@ -66,8 +66,8 @@ ggsave(p_auc,filename="plots/sGAW_AUC.png",width=8,height=5)
 
 # Max sinusoidal analysis -----------------------------------------------------
 
-rhy_plot(LF_data,"Min",y_lim=c(-.75,0)) -> analysis_out
+rhy_plot(LF_data,"Min",y_lim=c(-1,-.1)) -> analysis_out
 
 analysis_out$combined
 p_max <- analysis_out[["plot_pbs"]] + analysis_out[["plot_hdm"]]
-ggsave(p_max,filename="plots/sGAW_max.png",width=8,height=5)
+ggsave(p_max,filename="plots/sGAW_min.png",width=8,height=5)

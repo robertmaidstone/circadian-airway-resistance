@@ -250,7 +250,7 @@ rhy_plot<-function(LF_data,Type,y_lim){
     mutate(Min_Value=min(Value,na.rm=T)) %>%
     mutate(AUC = sum(diff(Mch_conc) * (Value[-1] + Value[-length(Value)]) / 2)) %>%
     #mutate(AUC = sum(diff(Mch_conc) * (Value[-1] + Value[-4]) / 2,na.rm=T)) %>%
-    dplyr::select(Sample,Max_Value,AUC) %>%
+    dplyr::select(Sample,Max_Value,Min_Value,AUC) %>%
     distinct %>% ungroup -> sum_data
   if(Type=="Max"){
     sum_data <- sum_data %>% mutate(AUC=Max_Value)
