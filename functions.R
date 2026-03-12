@@ -2,16 +2,32 @@
 
 # function to fit dose response curve and manipulate parameters -------------------------------------
 
-dr_fit <- function(LFdata) {
+dr_fit <- function(LFdata,LL="LL4") {
   #LF_data$Group <- LF_data$Sample
   LF_data$Group <- interaction(LF_data$Sample,LF_data$ZT)
   
+  if(LL=="LL4"){
   model <- drm(
     Value ~ Mch_conc,
     data = LF_data,
     curveid = Group,
     fct = LL.4(names = c("Slope", "Lower", "Upper", "EC50"))
   )
+  }else if(LL=="LL3"){
+    model <- drm(
+      Value ~ Mch_conc,
+      data = LF_data,
+      curveid = Group,
+      fct = LL.3(names = c("Slope", "Upper", "EC50"))
+    ) 
+  }else if(LL=="LL3u"){
+    model <- drm(
+      Value ~ Mch_conc,
+      data = LF_data,
+      curveid = Group,
+      fct = LL.3u(names = c("Slope", "Lower", "EC50"))
+    ) 
+  }else{stop("Error unknown LL value")}
   
   params <- coef(model)
   param_df <- as.data.frame(params)
@@ -30,6 +46,62 @@ dr_fit <- function(LFdata) {
   return(param_formodel)
 }
 
+dr_fit_sep <- function(LF_data) {
+  
+  # Create grouping variable
+  LF_data$Group <- interaction(LF_data$Sample, LF_data$ZT)
+  
+  # Split into list of data frames, one per group
+  data_list <- split(LF_data, LF_data$Group)
+  
+  # Fit each curve separately
+  fit_list <- lapply(names(data_list), function(g) {
+    df <- data_list[[g]]
+    
+    # Try fitting; return NULL if it fails
+    fit <- tryCatch(
+      drm(
+        Value ~ Mch_conc,
+        data = df,
+        fct = LL.4(names = c("Slope", "Lower", "Upper", "EC50"))
+      ),
+      error = function(e) NULL,
+      warning = function(w) NULL
+    )
+    
+    if (is.null(fit)) return(NULL)
+    
+    # Extract parameters
+    p <- coef(fit)
+    out <- data.frame(Parameter = names(p), Estimate = p)
+    out$Group <- g
+    out
+  })
+  
+  # Remove failed fits
+  fit_list <- fit_list[!sapply(fit_list, is.null)]
+  
+  # Combine into one data frame
+  param_df <- do.call(rbind, fit_list)
+  
+  # Merge metadata
+  param_df <- merge(
+    param_df,
+    LF_data %>% dplyr::select(Group, Genotype, Treatment, ZT) %>% unique(),
+    by = "Group"
+  ) %>%
+    separate(Parameter,
+             into = c("Parameter", "Junk"),
+             sep = ":") %>%
+    mutate(params=Estimate)
+  
+  # Factor variables
+  param_df$ZT <- factor(param_df$ZT)
+  param_df$Treatment <- factor(param_df$Treatment)
+  param_df$Genotype <- factor(param_df$Genotype)
+  
+  return(param_df)
+}
 
 # function to run anova on dr_fit output ----------------------------------
 
@@ -119,7 +191,7 @@ for(Gen in c("WT","KO")){
   
 t_data %>%
   filter(Genotype==Gen) %>%
-  mutate(ZT=as.character(ZT)) %>%
+  mutate(ZT=factor(as.character(ZT),ordered=T,levels=sort(unique(t_data$ZT)))) %>%
   ggplot(aes(x=Mch_conc,y=Med_Value)) + geom_line(aes(linetype = Treatment, color = ZT))+
   geom_point(aes(color = ZT))+
   scale_x_continuous(breaks=c(0,3.12,6.25,12.5,25,50))+
@@ -135,7 +207,7 @@ t_data %>%
   ggtitle(gen_labels[which(Gen==c("WT","KO"))])-> p1
  assign(paste0("p_",Gen),value = p1)
 }
-p_comb <- (p_WT+theme(legend.position = "none"))|p_KO
+p_comb <- (p_WT+theme(legend.position = "none"))|(p_KO+theme(axis.title.y = element_blank()))
   return(p_comb)
 }
 
@@ -235,7 +307,7 @@ plot_rhy_funcs <- function(df, predict_values, annot_pvals, sig_line_pvals,
 }
 
 
-rhy_plot<-function(LF_data,Type,y_lim){
+rhy_plot<-function(LF_data,Type,y_lim,y_lab){
   treatments <- c("PBS", "HDM")
   genotypes  <- c("WT", "KO")
   list_out <- list()
@@ -254,12 +326,12 @@ rhy_plot<-function(LF_data,Type,y_lim){
     distinct %>% ungroup -> sum_data
   if(Type=="Max"){
     sum_data <- sum_data %>% mutate(AUC=Max_Value)
-    y_lab <- "Max Airway Resistance R<sub>rs</sub>(cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)"
+    #y_lab <- "Max Airway Resistance R<sub>rs</sub>(cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)"
   }else if(Type=="Min"){
     sum_data <- sum_data %>% mutate(AUC=Min_Value)
-    y_lab<-"Min Airway Resistance R<sub>rs</sub>(cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)"
+    #y_lab<-"Min Airway Resistance R<sub>rs</sub>(cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)"
   }else if(Type=="AUC"){
-    y_lab<-"AUC Airway Resistance R<sub>rs</sub>(cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)"
+   # y_lab<-"AUC Airway Resistance R<sub>rs</sub>(cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)"
   }else{
     stop("Error type not recognised")
   }

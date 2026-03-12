@@ -46,11 +46,11 @@ anova_pvals_slope <- dr_anova(param_formodel,"Slope","params ~ ZT * Treatment")
 
 # plotting dose response curve --------------------------------------------
 
-dr_plot(LF_data,anova_pvals_slope,anova_pvals_upper,c(2,8),y_lab="Median EF50 (ml.sec<sup>-1</sup>)")
+dr_plot(LF_data,anova_pvals_slope,anova_pvals_upper,c(2,8),y_lab="Median sRAW (cm.H<sub>2</sub>O.sec)")
 
 png("plots/sRAW_meth_dose_response.png", width = 2400, height = 1500, res = 300)  # adjust size/res as needed
 grid.draw(
-  dr_plot(LF_data,anova_pvals_slope,anova_pvals_upper,c(2,8),y_lab="Median EF50 (ml.sec<sup>-1</sup>)")
+  dr_plot(LF_data,anova_pvals_slope,anova_pvals_upper,c(2,8),y_lab="Median sRAW (cm.H<sub>2</sub>O.sec)")
 )
 grid.text( expression("Methacholine Concentration (mg.mL"^"-1"*")"), y = unit(0.03, "npc"), gp = gpar(fontsize = 10))
 dev.off()
@@ -58,7 +58,7 @@ dev.off()
 
 # AUC sinusoidal analysis -----------------------------------------------------
 
-rhy_plot(LF_data,"AUC",y_lim=c(5,22)) -> analysis_out
+rhy_plot(LF_data,"AUC",y_lim=c(5,22),y_lab="AUC sRAW (cm.H<sub>2</sub>O.sec)") -> analysis_out
 
 analysis_out$combined
 p_auc <- analysis_out$combined
@@ -66,7 +66,7 @@ ggsave(p_auc,filename="plots/sRAW_AUC.png",width=8,height=5)
 
 # Max sinusoidal analysis -----------------------------------------------------
 
-rhy_plot(LF_data,"Max",y_lim=c(0.4,1.2)) -> analysis_out
+rhy_plot(LF_data,"Max",y_lim=c(0.4,1.2),y_lab="Max sRAW (cm.H<sub>2</sub>O.sec)") -> analysis_out
 
 analysis_out$combined
 p_max <- analysis_out$combined

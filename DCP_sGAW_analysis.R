@@ -35,8 +35,7 @@ lm(Value~ZT+Mch_conc,data=LF_data%>% filter(Genotype=="WT",Treatment=="HDM")) %>
 lm(Value~ZT,data=LF_data%>% filter(Genotype=="KO",Treatment=="HDM")) %>% anova
 
 # dose response model -----------------------------------------------------
-
-param_formodel <- dr_fit(LF_data) #uncomment these lines to rerun dr curve fits - warning takes some time
+param_formodel <- dr_fit_sep(LF_data) #uncomment these lines to rerun dr curve fits - warning takes some time
 save(param_formodel,file = "data/drcmodelparams_sGAW.RData")
 load("data/drcmodelparams_sGAW.RData")
 
