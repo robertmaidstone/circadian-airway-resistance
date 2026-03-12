@@ -126,8 +126,7 @@ t_data %>%
   theme_bw()+
   ylab(y_lab) +
   ylim(y_lim)+
-  theme(legend.position = "none",
-        axis.title.x = element_blank(),
+  theme(axis.title.x = element_blank(),
         axis.title.y = element_markdown(),
         plot.title = element_markdown(),
         axis.text.x = element_text(angle = 45, hjust = 1))+
@@ -136,8 +135,8 @@ t_data %>%
   ggtitle(gen_labels[which(Gen==c("WT","KO"))])-> p1
  assign(paste0("p_",Gen),value = p1)
 }
-
-  return(p_WT|p_KO)
+p_comb <- (p_WT+theme(legend.position = "none"))|p_KO
+  return(p_comb)
 }
 
 
@@ -225,7 +224,8 @@ plot_rhy_funcs <- function(df, predict_values, annot_pvals, sig_line_pvals,
       legend.title = element_blank(),
       legend.text = element_markdown(),
       legend.background = element_blank()
-    )
+    ) +
+      guides(fill = guide_legend(override.aes = list(colour = col_vec,alpha=1),drop=FALSE))
   }
   # --- 6. Y-axis logic -------------------------------------------------------
   if (!y_axis) {

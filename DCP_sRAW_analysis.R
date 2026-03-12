@@ -70,4 +70,4 @@ rhy_plot(LF_data,"Max",y_lim=c(0.4,1.2)) -> analysis_out
 
 analysis_out$combined
 p_max <- analysis_out$combined
-ggsave(p_max,filename="plots/sRAW_min.png",width=8,height=5)
+ggsave(p_max,filename="plots/sRAW_max.png",width=8,height=5)
