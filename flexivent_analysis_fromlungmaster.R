@@ -10,11 +10,18 @@ library(rstatix)
 library(purrr)
 
 # load data ---------------------------------------------------------------
-setwd("~/Amlan/AirwayResistance/")
-source("functions.R")
-read.xlsx("data/AC_FVData_Complete.xlsx",sheet=5,fillMergedCells = TRUE) -> LF_data
+read.xlsx("data/LungFunctionMasterDataSet.xlsx",sheet=2) -> animal_data
+read.xlsx("data/LungFunctionMasterDataSet.xlsx",sheet=1,fillMergedCells = TRUE) -> LF_data
+###
+LF_data %>% filter(Parameter=="Cull_FV_Rrs") %>% pivot_longer(cols=4:39,names_to = "Animal.ID") %>%
+  group_by(`Animal.ID`,ZT) %>%
+  filter(Mch_Conc!=0) %>%
+  merge(animal_data,by="Animal.ID") %>% 
+  filter(!is.na(value))-> LF_data
 
-LF_data %>% filter(Mch_conc!=0) -> LF_data
+LF_data %>% rename(Sample=Animal.ID,Mch_conc=Mch_Conc,Value=value) %>%
+  dplyr::select(-Parameter,-Cull_time) %>%
+  dplyr::mutate(Genotype=ifelse(Genotype=="HET","KO","WT"))-> LF_data
 
 # mann whitney u on pairwise zts ----------------------------------
 
@@ -32,7 +39,7 @@ anova_pvals_slope <- dr_anova(param_formodel,"Slope","log10(-params) ~ ZT * Trea
 
 # plotting dose response curve --------------------------------------------
 
-p1<-dr_plot(LF_data,anova_pvals_slope,mw_results,c(0.7,5.7),y_lab="Maximum Airway Resistance R<sub>rs</sub>(cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)")
+p1<-dr_plot(LF_data,anova_pvals_slope,mw_results,c(0.7,20),y_lab="Maximum Airway Resistance R<sub>rs</sub>(cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)")
 p1
 
 png("plots/flex_meth_dose_response.png", width = 2400, height = 1500, res = 300)  # adjust size/res as needed
