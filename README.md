@@ -1,6 +1,68 @@
-Methacholine dose response curves were compared pairwise across timepoints using a Mann Whitney U test. Methacholine curves were then modelled on individual mice using the drc R package[1]. Slope parameter from these curves was compared by 2-way ANOVA using the stats R package[2].
+# Airway Resistance
 
-Summary statistics from methacholine dose response curves were calculated (area under the curve and max resistance) and then modelled over time as a sine wave with unknown amplitude, phase and mean value. This was fitted using nonlinear least squares using the nls function from the stats R package[2]. Where significantly different from a constant value over time (likelihood ratio test from lmtest[3] package, p<0.05), these lines are plotted with a solid line (otherwise dashed). To test for differences across conditions we modelled data jointly over time as a sine wave for all conditions adding variables for amplitude, phase and mean value for KO genotype and HDM treatment reporting where added variables were significant (p<0.05).
+## Analysis of methacholine dose–response curves and rhythmic airway resistance profiles in WT and Rev-erbα KO mice under PBS or HDM exposure
+This repository contains the full analysis pipeline for a respiratory study investigating how airway resistance varies across time, genotype, and allergen exposure. The project focuses on methacholine dose–response curves and the temporal rhythmicity of derived resistance metrics.
+
+## Overview
+
+The study compares airway resistance in:
+- Wild‑type (WT) vs Rev‑erbα knockout (KO) mice
+- PBS vs House Dust Mite (HDM) exposure
+- Multiple time points across the circadian cycle
+Two major analytical components are included:
+- Methacholine dose–response curve analysis
+- Rhythmic modelling of summary resistance metrics over time
+All analyses are performed in R using reproducible scripts contained in this repository.
+
+## Repository Structure
+```
+├── data/                 # Raw and processed airway resistance data
+├── scripts/              # Analysis scripts (dose-response, rhythmic modelling)
+├── figures/              # Generated plots
+├── results/              # Model outputs and summary tables
+└── README.md             # Project documentation
+```
+## Methacholine Dose–Response Analysi
+### Pairwise comparisons
+Methacholine dose–response curves were compared pairwise across time points using a Mann–Whitney U test.
+### Curve modelling
+Individual mouse dose–response curves were modelled using the drc R package [1].
+The slope parameter from each fitted curve was extracted and compared using a two‑way ANOVA (genotype × treatment) via the stats package [2].
+
+## Summary Metrics and Rhythmic Modelling
+Two summary statistics were derived from each methacholine curve:
+- Area Under the Curve (AUC)
+- Maximum resistance
+These metrics were modelled over time as a sine wave with unknown:
+- amplitude
+- phase
+- mean value
+Fitting was performed using nonlinear least squares (nls, stats package [2]).
+
+### Model comparison
+To determine whether rhythmicity was present, each sine model was compared with a constant model using a likelihood ratio test (lmtest package [3]).
+- Significant rhythms (p < 0.05) → plotted with solid lines
+- Non‑significant rhythms → plotted with dashed line
+
+### Joint modelling across conditions
+To test for differences between WT/KO and PBS/HDM groups, data were modelled jointly with additional parameters for:
+- genotype‑specific amplitude, phase, mean
+- treatment‑specific amplitude, phase, mean
+Significance of these added parameters (p < 0.05) indicates group‑level differences in rhythmic profiles
+
+## Dependencies
+- drc – dose–response curve fitting
+- stats – ANOVA, nonlinear least squares
+- lmtest – likelihood ratio testing
+- tidyverse – data manipulation and plotting
+
+## Running the Analysis
+- Clone the repository
+- Open the R project or set the working directory
+- Run scripts in scripts/ in the order indicated in their headers
+- Outputs will be written to results/ and figures/
+
+## References
 
 1.	Ritz, C., Baty, F., Streibig, J. C., Gerhard, D. (2015) Dose-Response Analysis Using R PLOS ONE,  10(12), e0146021
 2.	R Core Team (2024). R: A Language and Environment for Statistical Computing. R Foundation for Statistical Computing, Vienna, Austria. 
