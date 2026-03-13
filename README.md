@@ -1,0 +1,7 @@
+Methacholine dose response curves were compared pairwise across timepoints using a Mann Whitney U test. Methacholine curves were then modelled on individual mice using the drc R package[1]. Slope parameter from these curves was compared by 2-way ANOVA using the stats R package[2].
+
+Summary statistics from methacholine dose response curves were calculated (area under the curve and max resistance) and then modelled over time as a sine wave with unknown amplitude, phase and mean value. This was fitted using nonlinear least squares using the nls function from the stats R package[2]. Where significantly different from a constant value over time (likelihood ratio test from lmtest[3] package, p<0.05), these lines are plotted with a solid line (otherwise dashed). To test for differences across conditions we modelled data jointly over time as a sine wave for all conditions adding variables for amplitude, phase and mean value for KO genotype and HDM treatment reporting where added variables were significant (p<0.05).
+
+1.	Ritz, C., Baty, F., Streibig, J. C., Gerhard, D. (2015) Dose-Response Analysis Using R PLOS ONE,  10(12), e0146021
+2.	R Core Team (2024). R: A Language and Environment for Statistical Computing. R Foundation for Statistical Computing, Vienna, Austria. 
+3.	Achim Zeileis, Torsten Hothorn (2002). Diagnostic Checking in Regression Relationships. R News 2(3), 7-10. URL https://CRAN.R-project.org/doc/Rnews/
