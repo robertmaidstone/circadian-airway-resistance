@@ -136,6 +136,48 @@ dr_anova <- function(param_formodel, parameter, formula_string){
 }
 
 
+# function to run pairwise mann-whitney u tests ---------------------------
+
+dr_MWU_pairwise <- function(LF_data,BH=T){
+  # Subset once
+  mw_results <- data.frame()
+  for(Treat in c("PBS","HDM")){
+    mw_2 <-data.frame()
+    for(Gen in c("WT","KO")){
+      df <- LF_data %>%
+        filter(Treatment == Treat, Genotype == Gen)
+      
+      # All unique ZT pairs
+      ZT_pairs <- combn(sort(unique(df$ZT)), 2, simplify = FALSE)
+      
+      # Run Mann–Whitney U test for each pair
+      mw_1 <- map_df(ZT_pairs, function(pair) {
+        g1 <- pair[1]
+        g2 <- pair[2]
+        
+        test <- wilcox.test(
+          Value ~ ZT,
+          data = df %>% filter(ZT %in% c(g1, g2))
+        )
+        
+        tidy(test) %>%
+          mutate(
+            group1 = g1,
+            group2 = g2
+          ) %>%
+          dplyr::select(group1, group2, everything())
+      })
+      mw_1$Genotype=Gen
+      mw_2<-rbind(mw_2,mw_1)
+    }
+    mw_2$Treatment=Treat
+    mw_results<-rbind(mw_results,mw_2)
+  }
+  if(BH==TRUE){
+  mw_results <- mw_results %>%
+    mutate(p.adj = p.adjust(p.value, method = "BH"))}
+  return(mw_results)
+}
 # p to stars --------------------------------------------------------------
 
 p_to_stars <- function(p){
@@ -170,47 +212,146 @@ extract_sig_text <- function(df, Gen, prefix = "Upper") {
 
 # dose response curve plot ------------------------------------------------
 
-dr_plot <- function(LF_data,anova_pvals_slope,anova_pvals_upper,y_lim,y_lab){
-
-anova_pvals_slope$Variable <- c("ZT","Treatment","Interaction")
-anova_pvals_upper$Variable <- c("ZT","Treatment","Interaction")
+dr_plot <- function(LF_data,
+                    anova_pvals_slope,
+                    mw_results,
+                    y_lim,
+                    y_lab) {
   
-gen_labels <- c("WT","CCSP-Reverbα KO")
-
-LF_data %>% 
-  group_by(ZT,Genotype,Treatment,Mch_conc) %>%
-  mutate(Med_Value=mean(Value,na.rm=T)) %>%
-  dplyr::select(-Sample,-Value) %>%
-  unique %>% ungroup -> t_data
-
-for(Gen in c("WT","KO")){
-  upper_text <- extract_sig_text(anova_pvals_upper, Gen, prefix = "Upper ")
-  slope_text <- extract_sig_text(anova_pvals_slope, Gen, prefix = "Slope ")
   
-  sig_text <- paste(upper_text, slope_text, sep = "\n")
+  mw_results %>% group_by(Genotype,Treatment) %>% filter(p.adj<0.05) %>% mutate(num = n()) %>% dplyr::select(num) -> ff
+  if(dim(ff)[1]==0){xexpand<-0}else{xexpand<-max(ff$num,na.rm=T)}
+  # Label ANOVA rows
+  anova_pvals_slope$Variable <- c("ZT","Treatment","Interaction")
   
-t_data %>%
-  filter(Genotype==Gen) %>%
-  mutate(ZT=factor(as.character(ZT),ordered=T,levels=sort(unique(t_data$ZT)))) %>%
-  ggplot(aes(x=Mch_conc,y=Med_Value)) + geom_line(aes(linetype = Treatment, color = ZT))+
-  geom_point(aes(color = ZT))+
-  scale_x_continuous(breaks=c(0,3.12,6.25,12.5,25,50))+
-  theme_bw()+
-  ylab(y_lab) +
-  ylim(y_lim)+
-  theme(axis.title.x = element_blank(),
+  gen_labels <- c("WT","CCSP-Reverbα KO")
+  
+  # Precompute median values for plotting
+  t_data <- LF_data %>%
+    group_by(ZT, Genotype, Treatment, Mch_conc) %>%
+    summarise(Med_Value = mean(Value, na.rm = TRUE), .groups = "drop") %>%
+    mutate(ZT = factor(ZT, levels = sort(unique(ZT)), ordered = TRUE))
+  
+  # Helper: format ANOVA text
+  # extract_sig_text <- function(df, genotype, prefix = "") {
+  #   df %>%
+  #     filter(Genotype == genotype) %>%
+  #     mutate(label = paste0(prefix, Variable, ": p = ", signif(p_value, 3))) %>%
+  #     pull(label) %>%
+  #     paste(collapse = "\n")
+  # }
+  
+  # Helper: format pairwise MW text + bracket positions
+  make_bracket_df <- function(df, t_data,Gen,Trt) {
+    maxmch <- t_data$Mch_conc %>% max
+    t_data_temp<- t_data%>%filter(Genotype == Gen,Treatment == Trt,Mch_conc==maxmch) %>%
+      mutate(ZT=as.double(as.character(ZT)))
+    
+    df %>%
+      left_join(t_data_temp %>% select(ZT, Med_Value),
+                by = c("group1" = "ZT")) %>%
+      rename(y = Med_Value) %>%
+      left_join(t_data_temp %>% select(ZT, Med_Value),
+                by = c("group2" = "ZT")) %>%
+      rename(yend = Med_Value) %>%
+      mutate(labelo = paste0("p = ", signif(p.adj, 3))) %>%
+      mutate(label = p_to_stars(p.adj))
+  }
+  
+  # Loop over genotypes
+  for (Gen in c("WT","KO")) {
+    
+    # Create bracket positions
+    brackets <- make_bracket_df(
+      mw_results%>% filter(Genotype == Gen, Treatment == "HDM"), t_data,
+      Gen,"HDM"
+      
+    )
+    brackets<-brackets %>% filter(p.adj<0.05)
+    brackets <- brackets %>% mutate(xadj=row_number()*.1)
+    # ANOVA text
+    slope_text <- extract_sig_text(anova_pvals_slope, Gen, prefix = "Slope ")
+    sig_text <- slope_text
+    
+    # Base plot
+    p1 <- t_data %>%
+      filter(Genotype == Gen) %>%
+      ggplot(aes(x = Mch_conc, y = Med_Value)) +
+      geom_line(aes(linetype = Treatment, color = ZT)) +
+      geom_point(aes(color = ZT)) +
+      scale_x_continuous(breaks = c(0, 3.12, 6.25, 12.5, 25, 50)) +
+      scale_color_manual(values = c("#0072B2","#E69F00","#D55E00","#009E73")) +
+      theme_bw() +
+      ylab(y_lab) +
+      ylim(y_lim) +
+      theme(
+        axis.title.x = element_blank(),
         axis.title.y = element_markdown(),
         plot.title = element_markdown(),
-        axis.text.x = element_text(angle = 45, hjust = 1))+
-  scale_color_manual(values = c("#0072B2","#E69F00","#D55E00", "#009E73")) +
-  annotate("text", x = 1, y = max(y_lim), label = sig_text, hjust = 0, vjust = 1, size = 4)+
-  ggtitle(gen_labels[which(Gen==c("WT","KO"))])-> p1
- assign(paste0("p_",Gen),value = p1)
-}
-p_comb <- (p_WT+theme(legend.position = "none"))|(p_KO+theme(axis.title.y = element_blank()))
+        axis.text.x = element_text(angle = 45, hjust = 1)
+      ) +
+      ggtitle(gen_labels[which(Gen == c("WT","KO"))]) +
+      expand_limits(x = max(t_data$Mch_conc) * (1+xexpand/10)) +
+      annotate("text",
+               x = 1,
+               y = y_lim[2],
+               label = sig_text,
+               hjust = 0, vjust = 1, size = 4)
+    
+    # Add right‑side brackets
+    p1 <- p1 +
+      geom_segment(
+        data = brackets,
+        aes(
+          x = max(t_data$Mch_conc) * (1.07+xadj),
+          xend = max(t_data$Mch_conc) * (1.07+xadj),
+          y = y,
+          yend = yend
+        ),
+        inherit.aes = FALSE
+      )+
+      geom_segment(
+        data = brackets,
+        aes(
+          x = max(t_data$Mch_conc) * (1.05+xadj),
+          xend = max(t_data$Mch_conc) * (1.07+xadj),
+          y = y,
+          yend = y
+        ),
+        inherit.aes = FALSE
+      ) +
+      geom_segment(
+        data = brackets,
+        aes(
+          x = max(t_data$Mch_conc) * (1.05+xadj),
+          xend = max(t_data$Mch_conc) * (1.07+xadj),
+          y = yend,
+          yend = yend
+        ),
+        inherit.aes = FALSE
+      ) +
+      geom_text(
+        data = brackets,
+        aes(
+          x = max(t_data$Mch_conc) * (1.09+xadj),
+          y = (y+yend)/2,
+          #label = paste0("ZT", group1, " vs ZT", group2, ": ", label)
+          label = label
+        ),
+        hjust = 0,
+        size = 3,
+        inherit.aes = FALSE
+      )
+    
+    assign(paste0("p_", Gen), p1)
+  }
+  
+  # Combine WT | KO
+  p_comb <- (p_WT + theme(legend.position = "none")) |
+    (p_KO + theme(axis.title.y = element_blank()))
+  
   return(p_comb)
 }
-
 
 fit_nls_model <- function(df) {
   nls(

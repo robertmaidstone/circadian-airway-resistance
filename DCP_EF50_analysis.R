@@ -24,17 +24,9 @@ LF_data %>% rename(Sample=Animal.ID,Mch_conc=Mch_Conc,Value=value) %>%
   dplyr::select(-Parameter,-Cull_time) %>%
   dplyr::mutate(Genotype=ifelse(Genotype=="HET","KO","WT"))-> LF_data
 
-# anovas replace with tests as discussed ----------------------------------
+# mann whitney u on pairwise zts ----------------------------------
 
-model <- lmer(Value ~ ZT + Mch_conc + (1 | Sample), data = LF_data%>% filter(Treatment=="HDM",Genotype=="WT"))
-anova(model)
-
-
-lm(Value~ZT+Mch_conc,data=LF_data%>% filter(Treatment=="HDM",Genotype=="WT")) %>% anova
-lm(Value~Treatment*ZT,data=LF_data%>% filter(Genotype=="KO")) %>% anova
-
-lm(Value~ZT+Mch_conc,data=LF_data%>% filter(Genotype=="WT",Treatment=="HDM")) %>% anova
-lm(Value~ZT,data=LF_data%>% filter(Genotype=="KO",Treatment=="HDM")) %>% anova
+mw_results<-dr_MWU_pairwise(LF_data)
 
 # dose response model -----------------------------------------------------
 
@@ -48,19 +40,20 @@ anova_pvals_slope <- dr_anova(param_formodel,"Slope","params ~ ZT * Treatment")
 
 # plotting dose response curve --------------------------------------------
 
-dr_plot(LF_data,anova_pvals_slope,anova_pvals_upper,c(-.1,.5),y_lab="Median EF50 (ml.sec<sup>-1</sup>)")
 
+p1<-dr_plot(LF_data,anova_pvals_slope,mw_results,c(1,2.5),y_lab="Median EF50 (ml.sec<sup>-1</sup>)")
+p1
 png("plots/ef50_meth_dose_response.png", width = 2400, height = 1500, res = 300)  # adjust size/res as needed
 grid.draw(
-  dr_plot(LF_data,anova_pvals_slope,anova_pvals_upper,c(1,2.75),y_lab="Median EF50 (ml.sec<sup>-1</sup>)")
+  p1
 )
-grid.text( expression("Methacholine Concentration (mg.mL"^"-1"*")"), y = unit(0.03, "npc"), gp = gpar(fontsize = 10))
+grid.text( expression("Methacholine Concentration (mg.mL"^"-1"*")"), y = unit(0.015, "npc"), gp = gpar(fontsize = 10))
 dev.off()
 
 
 # AUC sinusoidal analysis -----------------------------------------------------
 
-rhy_plot(LF_data,"AUC",y_lim=c(-11,15)) -> analysis_out
+rhy_plot(LF_data,"AUC",y_lim=c(-11,15),"AUC EF50 (ml.sec<sup>-1</sup>)") -> analysis_out
 
 analysis_out$combined
 p_auc <- analysis_out$combined
@@ -68,8 +61,8 @@ ggsave(p_auc,filename="plots/EF50_AUC.png",width=8,height=5)
 
 # Max sinusoidal analysis -----------------------------------------------------
 
-rhy_plot(LF_data,"Max",y_lim=c(-.1,1.3)) -> analysis_out
+rhy_plot(LF_data,"Max",y_lim=c(-.1,.9),"Max EF50 (ml.sec<sup>-1</sup>)") -> analysis_out
 
 analysis_out$combined
-p_max <- analysis_out[["plot_pbs"]] + analysis_out[["plot_hdm"]]
+p_max <- analysis_out$combined
 ggsave(p_max,filename="plots/EF50_max.png",width=8,height=5)

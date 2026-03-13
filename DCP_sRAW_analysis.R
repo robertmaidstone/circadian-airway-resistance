@@ -22,17 +22,9 @@ LF_data %>% rename(Sample=Animal.ID,Mch_conc=Mch_Conc,Value=value) %>%
   dplyr::select(-Parameter,-Cull_time) %>%
   dplyr::mutate(Genotype=ifelse(Genotype=="HET","KO","WT"))-> LF_data
 
-# anovas replace with tests as discussed ----------------------------------
+# mann whitney u on pairwise zts ----------------------------------
 
-model <- lmer(Value ~ ZT + Mch_conc + (1 | Sample), data = LF_data%>% filter(Treatment=="HDM",Genotype=="WT"))
-anova(model)
-
-
-lm(Value~ZT+Mch_conc,data=LF_data%>% filter(Treatment=="HDM",Genotype=="WT")) %>% anova
-lm(Value~Treatment*ZT,data=LF_data%>% filter(Genotype=="KO")) %>% anova
-
-lm(Value~ZT+Mch_conc,data=LF_data%>% filter(Genotype=="WT",Treatment=="HDM")) %>% anova
-lm(Value~ZT,data=LF_data%>% filter(Genotype=="KO",Treatment=="HDM")) %>% anova
+mw_results<-dr_MWU_pairwise(LF_data)
 
 # dose response model -----------------------------------------------------
 
@@ -46,13 +38,14 @@ anova_pvals_slope <- dr_anova(param_formodel,"Slope","params ~ ZT * Treatment")
 
 # plotting dose response curve --------------------------------------------
 
-dr_plot(LF_data,anova_pvals_slope,anova_pvals_upper,c(2,8),y_lab="Median sRAW (cm.H<sub>2</sub>O.sec)")
+p1 <- dr_plot(LF_data,anova_pvals_slope,mw_results,c(2,7.5),y_lab="Median sRAW (cm.H<sub>2</sub>O.sec)")
+p1
 
 png("plots/sRAW_meth_dose_response.png", width = 2400, height = 1500, res = 300)  # adjust size/res as needed
 grid.draw(
-  dr_plot(LF_data,anova_pvals_slope,anova_pvals_upper,c(2,8),y_lab="Median sRAW (cm.H<sub>2</sub>O.sec)")
+    patchworkGrob(p1)
 )
-grid.text( expression("Methacholine Concentration (mg.mL"^"-1"*")"), y = unit(0.03, "npc"), gp = gpar(fontsize = 10))
+grid.text( expression("Methacholine Concentration (mg.mL"^"-1"*")"), y = unit(0.015, "npc"), gp = gpar(fontsize = 10))
 dev.off()
 
 
