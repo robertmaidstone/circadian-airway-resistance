@@ -14,14 +14,6 @@ Two major analytical components are included:
 - Rhythmic modelling of summary resistance metrics over time
 All analyses are performed in R using reproducible scripts contained in this repository.
 
-## Repository Structure
-```
-├── data/                 # Raw and processed airway resistance data
-├── scripts/              # Analysis scripts (dose-response, rhythmic modelling)
-├── figures/              # Generated plots
-├── results/              # Model outputs and summary tables
-└── README.md             # Project documentation
-```
 ## Methacholine Dose–Response Analysi
 ### Pairwise comparisons
 Methacholine dose–response curves were compared pairwise across time points using a Mann–Whitney U test.
@@ -50,17 +42,23 @@ To test for differences between WT/KO and PBS/HDM groups, data were modelled joi
 - treatment‑specific amplitude, phase, mean
 Significance of these added parameters (p < 0.05) indicates group‑level differences in rhythmic profiles
 
-## Dependencies
+## Packages called
 - drc – dose–response curve fitting
 - stats – ANOVA, nonlinear least squares
+- lme4 - model fitting
 - lmtest – likelihood ratio testing
 - tidyverse – data manipulation and plotting
+- openxlsx - reading in excel files
+- grid/patchwork/ggtext - plotting
+- rstatix -
+- purrr -
 
 ## Running the Analysis
 - Clone the repository
-- Open the R project or set the working directory
-- Run scripts in scripts/ in the order indicated in their headers
-- Outputs will be written to results/ and figures/
+- Set the working directory
+- Inputs from data/ folder
+- Run an _analysis.R file (DCP and flexivent examples given) which will use functions from functions.R to run the analysis, some data manipulating may be needed.
+- Outputs will be written to plots/
 
 ## References
 
