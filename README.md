@@ -14,7 +14,7 @@ Two major analytical components are included:
 - Rhythmic modelling of summary resistance metrics over time
 All analyses are performed in R using reproducible scripts contained in this repository.
 
-## Methacholine Dose–Response Analysi
+## Methacholine Dose–Response Analysis
 ### Pairwise comparisons
 Methacholine dose–response curves were compared pairwise across time points using a Mann–Whitney U test.
 ### Curve modelling
