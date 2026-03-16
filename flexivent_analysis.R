@@ -5,7 +5,7 @@ library(patchwork)
 library(ggtext)
 library(drc)
 library(lme4)
-
+library(broom)
 library(rstatix)
 library(purrr)
 

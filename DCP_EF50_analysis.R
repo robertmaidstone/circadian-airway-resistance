@@ -5,6 +5,7 @@ library(patchwork)
 library(ggtext)
 library(drc)
 library(lme4)
+library(broom)
 
 # load data ---------------------------------------------------------------
 setwd("~/Amlan/AirwayResistance/")

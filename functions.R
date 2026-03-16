@@ -248,10 +248,10 @@ dr_plot <- function(LF_data,
       mutate(ZT=as.double(as.character(ZT)))
     
     df %>%
-      left_join(t_data_temp %>% select(ZT, Med_Value),
+      left_join(t_data_temp %>% dplyr::select(ZT, Med_Value),
                 by = c("group1" = "ZT")) %>%
       rename(y = Med_Value) %>%
-      left_join(t_data_temp %>% select(ZT, Med_Value),
+      left_join(t_data_temp %>% dplyr::select(ZT, Med_Value),
                 by = c("group2" = "ZT")) %>%
       rename(yend = Med_Value) %>%
       mutate(labelo = paste0("p = ", signif(p.adj, 3))) %>%
@@ -379,7 +379,7 @@ plot_rhy_funcs <- function(df, predict_values, annot_pvals, sig_line_pvals,
                            Tr, y_axis = TRUE, legend = TRUE, y_lab, y_lim) {
   
   col_vec    <- c("#0072B2", "#E69F00")
-  gen_labels <- c("CCSP-Reverbα WT", "CCSP-Reverbα KO")
+  gen_labels <- c("WT", "CCSP-Reverbα KO")
   y_limit    <- y_lim
   # --- 1. Prepare significance text -----------------------------------------
   sig_text <- extract_sig_text(annot_pvals, Tr, prefix = "")
