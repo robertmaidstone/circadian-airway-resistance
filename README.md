@@ -1,4 +1,4 @@
-# Airway Resistance
+# circadian-airway-resistance
 
 ## Analysis of methacholine dose–response curves and rhythmic airway resistance profiles in WT and Rev-erbα KO mice under PBS or HDM exposure
 This repository contains the full analysis pipeline for a respiratory study investigating how airway resistance varies across time, genotype, and allergen exposure. The project focuses on methacholine dose–response curves and the temporal rhythmicity of derived resistance metrics.
