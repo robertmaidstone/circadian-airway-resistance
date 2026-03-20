@@ -1,7 +1,12 @@
-# circadian-airway-resistance
+# Analysis of methacholine dose–response curves and rhythmic airway resistance profiles
 
-## Analysis of methacholine dose–response curves and rhythmic airway resistance profiles in WT and Rev-erbα KO mice under PBS or HDM exposure
-This repository contains the full analysis pipeline for a respiratory study investigating how airway resistance varies across time, genotype, and allergen exposure. The project focuses on methacholine dose–response curves and the temporal rhythmicity of derived resistance metrics.
+![R](https://img.shields.io/badge/R-%3E%3D4.2-blue)
+![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
+![Last Commit](https://img.shields.io/github/last-commit/robertmaidstone/asthma-shiftwork-ukb-female)
+
+This repository contains an analysis pipeline for a respiratory study investigating how airway resistance varies across time, genotype, and allergen exposure. Airway resistance is measured using two different experimental techniques; DCP (measuring sRAW, sGAW and EF50) and Flexivent. Analysis focuses on comparison of methacholine dose–response curves and the temporal rhythmicity of derived resistance metrics. Analytical techniques used include basic statistical tests, non-linear modelling, harmonic regression, and production of publication ready figures.
+
+---
 
 ## Overview
 
@@ -42,16 +47,23 @@ To test for differences between WT/KO and PBS/HDM groups, data were modelled joi
 - treatment‑specific amplitude, phase, mean
 Significance of these added parameters (p < 0.05) indicates group‑level differences in rhythmic profiles
 
-## Packages called
-- drc – dose–response curve fitting
-- stats – ANOVA, nonlinear least squares
-- lme4 - model fitting
-- lmtest – likelihood ratio testing
-- tidyverse – data manipulation and plotting
-- openxlsx - reading in excel files
-- grid/patchwork/ggtext - plotting
-- rstatix -
-- purrr -
+---
+
+## Requirements
+
+### **Software**
+- **R ≥ 4.2**
+
+### **Key Packages**
+- `drc` – dose–response curve fitting
+- `stats` – ANOVA, nonlinear least squares
+- `lme4` - model fitting
+- `lmtest` – likelihood ratio testing
+- `tidyverse` – data manipulation and plotting
+- `openxlsx` - reading in excel files
+- `grid`/`patchwork`/`ggtext` - plotting
+- `rstatix` -
+- `purrr` -
 
 ## Running the Analysis
 - Clone the repository
@@ -59,7 +71,13 @@ Significance of these added parameters (p < 0.05) indicates group‑level differ
 - Inputs from data/ folder
 - Run an _analysis.R file (DCP and flexivent examples given) which will use functions from functions.R to run the analysis, some data manipulating may be needed.
 - Outputs will be written to plots/
+- 
+## Citation
+If using this code please cite the repository.
 
+## Contributing
+Contributions, suggestions, and extensions are welcome.
+Please open an issue or submit a pull request.
 ## References
 
 1.	Ritz, C., Baty, F., Streibig, J. C., Gerhard, D. (2015) Dose-Response Analysis Using R PLOS ONE,  10(12), e0146021
