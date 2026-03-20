@@ -1,0 +1,35 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: ciradian-airway-resistance
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Robert
+    family-names: Maidstone
+    email: robert.maidstone@manchester.ac.uk
+    affiliation: University of Manchester
+    orcid: 'https://orcid.org/0000-0002-3482-3246'
+  - given-names: Amlan
+    family-names: Chakraborty
+    affiliation: University of Manchester
+  - given-names: Hannah
+    family-names: Durrington
+    affiliation: University of Manchester
+repository-code: >-
+  https://github.com/robertmaidstone/circadian-airway-resistance/tree/main
+abstract: >-
+  Analysis pipeline for a respiratory study investigating
+  how airway resistance varies across time, genotype, and
+  allergen exposure.
+keywords:
+  - Respiratory
+  - Airway
+  - Methacholine
+  - Dose-response
+  - DCP
+  - Flexivent
+license: MIT
