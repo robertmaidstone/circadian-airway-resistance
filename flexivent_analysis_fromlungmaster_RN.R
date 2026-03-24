@@ -48,7 +48,7 @@ anova_pvals_slope <- dr_anova(param_formodel,"Slope","log10(-params) ~ ZT * Trea
 
 # plotting dose response curve --------------------------------------------
 
-p1<-dr_plot(LF_data,anova_pvals_slope,mw_results,c(0,2),y_lab="Maximum Airway Resistance R<sub>rs</sub>(cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)")
+p1<-dr_plot(LF_data,anova_pvals_slope,mw_results,c(0,2.5),y_lab="Maximum Airway Resistance R<sub>rs</sub>(cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)")
 p1
 
 png("plots/flex_meth_dose_response_LFmaster_RN.png", width = 2400, height = 1500, res = 300)  # adjust size/res as needed
