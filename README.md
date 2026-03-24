@@ -2,7 +2,7 @@
 
 ![R](https://img.shields.io/badge/R-%3E%3D4.2-blue)
 ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
-![Last Commit](https://img.shields.io/github/last-commit/robertmaidstone/asthma-shiftwork-ukb-female)
+![Last Commit](https://img.shields.io/github/last-commit/robertmaidstone/circadian-airway-resistance?cacheSeconds=60)
 
 This repository contains an analysis pipeline for a respiratory study investigating how airway resistance varies across time, genotype, and allergen exposure. Airway resistance is measured using two different experimental techniques; DCP (measuring sRAW, sGAW and EF50) and Flexivent. Analysis focuses on comparison of methacholine dose–response curves and the temporal rhythmicity of derived resistance metrics. Analytical techniques used include basic statistical tests, non-linear modelling, harmonic regression, and production of publication ready figures.
 
