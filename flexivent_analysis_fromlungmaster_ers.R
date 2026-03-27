@@ -9,6 +9,7 @@ library(lme4)
 library(rstatix)
 library(purrr)
 
+setwd("~/Amlan/AirwayResistance/")
 source("functions.r")
 
 #par_val<-"Cull_FV_Rrs"
@@ -37,7 +38,8 @@ LF_data2 %>% rename(Sample=Animal.ID,Mch_conc=Mch_Conc,Value=value) %>%
 LF_data2 %>% filter(!is.na(Value)) -> LF_data
 
 LF_data_noninvert <- LF_data
-LF_data$Value <- (LF_data$Value)^(-1)
+LF_data$Value_o <- LF_data$Value
+LF_data$Value <-(LF_data$Value)^(-1)
 
 # mann whitney u on pairwise zts ----------------------------------
 
