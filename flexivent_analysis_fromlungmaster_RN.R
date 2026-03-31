@@ -40,8 +40,8 @@ mw_results<-dr_MWU_pairwise(LF_data)
 
 # dose response model -----------------------------------------------------
 
-param_formodel <- dr_fit(LF_data) #uncomment these lines to rerun dr curve fits - warning takes some time
-save(param_formodel,file = "data/drcmodelparams_flex_LFmaster_RN.RData")
+# param_formodel <- dr_fit(LF_data) #uncomment these lines to rerun dr curve fits - warning takes some time
+# save(param_formodel,file = "data/drcmodelparams_flex_LFmaster_RN.RData")
 load("data/drcmodelparams_flex_LFmaster_RN.RData")
 
 anova_pvals_upper <- dr_anova(param_formodel,"Upper","log10(params) ~ ZT * Treatment") # not used
@@ -50,18 +50,18 @@ anova_pvals_slope <- dr_anova(param_formodel,"Slope","log10(-params) ~ ZT * Trea
 
 anova_pvals_slope_geno <- dr_anova_gen(param_formodel,"Slope","log10(-params) ~ ZT*Genotype")
 
-anova_pvals_slope %>% filter(WT<0.05,KO<0.05)
-anova_pvals_slope_geno %>% filter(PBS<0.05,HDM<0.05)
+anova_pvals_slope %>% filter(WT<0.05|KO<0.05)
+anova_pvals_slope_geno %>% filter(PBS<0.05|HDM<0.05)
 # plotting dose response curve --------------------------------------------
 
 p1<-dr_plot(LF_data,anova_pvals_slope,mw_results,c(0,2.25),y_lab="Mean Rn (cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)")
 p1
 
-png("plots/flex_meth_dose_response_LFmaster_RN_v2.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
+png("plots/flex_meth_dose_response_LFmaster_RN.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
 grid.draw(
   p1
 )
-grid.text( expression("Methacholine Concentration (mg.mL"^"-1"*")"), y = unit(0.03, "npc"), gp = gpar(fontsize = 10))
+grid.text( expression("Methacholine Concentration (mg.mL"^"-1"*")"), y = unit(0.03, "npc"), gp = gpar(fontsize = 12))
 dev.off()
 
 

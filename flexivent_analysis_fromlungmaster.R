@@ -26,7 +26,7 @@ LF_data2 %>% filter(Parameter=="Cull_FV_Rrs") %>% pivot_longer(cols=4:99,names_t
 LF_data2 %>% rename(Sample=Animal.ID,Mch_conc=Mch_Conc,Value=value) %>%
   dplyr::select(-Parameter) -> LF_data2
 
-LF_data2 %>% filter(!is.na(Value)) -> LF_data
+LF_data2 %>% filter(!is.na(Value)) %>% filter(Sample!=514230)-> LF_data
 
 # mann whitney u on pairwise zts ----------------------------------
 
@@ -34,37 +34,42 @@ mw_results<-dr_MWU_pairwise(LF_data)
 
 # dose response model -----------------------------------------------------
 
-param_formodel <- dr_fit(LF_data) #uncomment these lines to rerun dr curve fits - warning takes some time
-save(param_formodel,file = "data/drcmodelparams_flex_LFmaster.RData")
+# param_formodel <- dr_fit(LF_data) #uncomment these lines to rerun dr curve fits - warning takes some time
+# save(param_formodel,file = "data/drcmodelparams_flex_LFmaster.RData")
 load("data/drcmodelparams_flex_LFmaster.RData")
 
 anova_pvals_upper <- dr_anova(param_formodel,"Upper","log10(params) ~ ZT * Treatment") # not used
 
 anova_pvals_slope <- dr_anova(param_formodel,"Slope","log10(-params) ~ ZT * Treatment")
 
+anova_pvals_slope_geno <- dr_anova_gen(param_formodel,"Slope","log10(-params) ~ ZT*Genotype")
+
+anova_pvals_slope %>% filter(WT<0.05,KO<0.05)
+anova_pvals_slope_geno %>% filter(PBS<0.05,HDM<0.05)
+
 # plotting dose response curve --------------------------------------------
 
-p1<-dr_plot(LF_data,anova_pvals_slope,mw_results,c(0.7,5.7),y_lab="Maximum Airway Resistance R<sub>rs</sub>(cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)")
+p1<-dr_plot(LF_data,anova_pvals_slope,mw_results,c(0.7,5.7),y_lab="Mean Airway Resistance R<sub>rs</sub>(cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)")
 p1
 
-png("plots/flex_meth_dose_response_LFmaster.png", width = 2400, height = 1500, res = 300)  # adjust size/res as needed
+png("plots/flex_meth_dose_response_LFmaster.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
 grid.draw(
   p1
 )
-grid.text( expression("Methacholine Concentration (mg.mL"^"-1"*")"), y = unit(0.03, "npc"), gp = gpar(fontsize = 10))
+grid.text( expression("Methacholine Concentration (mg.mL"^"-1"*")"), y = unit(0.03, "npc"), gp = gpar(fontsize = 12))
 dev.off()
 
 
 # AUC sinusoidal analysis -----------------------------------------------------
 
-rhy_plot(LF_data,"AUC",y_lim=c(-6,50),y_lab="AUC Airway Resistance R<sub>rs</sub>(cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)") -> analysis_out
+rhy_plot(LF_data,"AUC",y_lim=c(-6,50),y_lab="AUC of Airway Resistance R<sub>rs</sub>(cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)") -> analysis_out
 
 p_auc <- analysis_out$combined
-ggsave(p_auc,filename="plots/flex_AUC_LFmaster.png",width=8,height=5)
+ggsave(p_auc,filename="plots/flex_AUC_LFmaster.png",width=10,height=5)
 
 # Max sinusoidal analysis -----------------------------------------------------
 
 rhy_plot(LF_data,"Max",y_lim=c(-.1,1.3),y_lab="Max Airway Resistance R<sub>rs</sub>(cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)") -> analysis_out
 
 p_max <- analysis_out$combined
-ggsave(p_max,filename="plots/flex_max_LFmaster.png",width=8,height=5)
+ggsave(p_max,filename="plots/flex_max_LFmaster.png",width=10,height=5)

@@ -37,26 +37,38 @@ anova_pvals_upper <- dr_anova(param_formodel,"Upper","log10(params+1) ~ ZT * Tre
 
 anova_pvals_slope <- dr_anova(param_formodel,"Slope","params ~ ZT * Treatment")
 
+anova_pvals_slope_geno <- dr_anova_gen(param_formodel,"Slope","log10(-params) ~ ZT*Genotype")
+
+anova_pvals_slope %>% filter(WT<0.05|KO<0.05)
+anova_pvals_slope_geno %>% filter(PBS<0.05|HDM<0.05)
+
 # plotting dose response curve --------------------------------------------
 
-p1 <- dr_plot(LF_data,anova_pvals_slope,mw_results,c(2,7.5),y_lab="Median sRAW (cm.H<sub>2</sub>O.sec)")
+p1 <- dr_plot(LF_data,anova_pvals_slope,mw_results,c(2,7.5),y_lab="Mean sRAW (cm.H<sub>2</sub>O.sec)")
 p1
 
-png("plots/sRAW_meth_dose_response.png", width = 2400, height = 1500, res = 300)  # adjust size/res as needed
+png("plots/sRAW_meth_dose_response.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
 grid.draw(
     patchworkGrob(p1)
 )
-grid.text( expression("Methacholine Concentration (mg.mL"^"-1"*")"), y = unit(0.015, "npc"), gp = gpar(fontsize = 10))
+grid.text(
+  "HDM slope\nchange by\ngenotype *",
+  x = unit(0.89, "npc"),   # horizontal position
+  y = unit(0.23, "npc"),   # vertical position
+  just = "left",
+  gp = gpar(fontsize = 12)
+)
+grid.text( expression("Methacholine Concentration (mg.mL"^"-1"*")"), y = unit(0.015, "npc"), gp = gpar(fontsize = 12))
 dev.off()
 
 
 # AUC sinusoidal analysis -----------------------------------------------------
 
-rhy_plot(LF_data,"AUC",y_lim=c(5,22),y_lab="AUC sRAW (cm.H<sub>2</sub>O.sec)") -> analysis_out
+rhy_plot(LF_data,"AUC",y_lim=c(5,22),y_lab="AUC of sRAW (cm.H<sub>2</sub>O.sec)") -> analysis_out
 
 analysis_out$combined
 p_auc <- analysis_out$combined
-ggsave(p_auc,filename="plots/sRAW_AUC.png",width=8,height=5)
+ggsave(p_auc,filename="plots/sRAW_AUC.png",width=10,height=5)
 
 # Max sinusoidal analysis -----------------------------------------------------
 
@@ -64,4 +76,4 @@ rhy_plot(LF_data,"Max",y_lim=c(0.4,1.2),y_lab="Max sRAW (cm.H<sub>2</sub>O.sec)"
 
 analysis_out$combined
 p_max <- analysis_out$combined
-ggsave(p_max,filename="plots/sRAW_max.png",width=8,height=5)
+ggsave(p_max,filename="plots/sRAW_max.png",width=10,height=5)

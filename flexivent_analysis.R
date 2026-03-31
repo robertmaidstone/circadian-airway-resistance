@@ -30,29 +30,34 @@ anova_pvals_upper <- dr_anova(param_formodel,"Upper","log10(params) ~ ZT * Treat
 
 anova_pvals_slope <- dr_anova(param_formodel,"Slope","log10(-params) ~ ZT * Treatment")
 
+anova_pvals_slope_geno <- dr_anova_gen(param_formodel,"Slope","log10(-params) ~ ZT*Genotype")
+
+anova_pvals_slope %>% filter(WT<0.05|KO<0.05)
+anova_pvals_slope_geno %>% filter(PBS<0.05|HDM<0.05)
+
 # plotting dose response curve --------------------------------------------
 
-p1<-dr_plot(LF_data,anova_pvals_slope,mw_results,c(0.7,5.7),y_lab="Maximum Airway Resistance R<sub>rs</sub>(cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)")
+p1<-dr_plot(LF_data,anova_pvals_slope,mw_results,c(0.7,5.7),y_lab="Mean Airway Resistance R<sub>rs</sub>(cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)")
 p1
 
-png("plots/flex_meth_dose_response.png", width = 2400, height = 1500, res = 300)  # adjust size/res as needed
+png("plots/flex_meth_dose_response.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
 grid.draw(
   p1
 )
-grid.text( expression("Methacholine Concentration (mg.mL"^"-1"*")"), y = unit(0.03, "npc"), gp = gpar(fontsize = 10))
+grid.text( expression("Methacholine Concentration (mg.mL"^"-1"*")"), y = unit(0.03, "npc"), gp = gpar(fontsize = 12))
 dev.off()
 
 
 # AUC sinusoidal analysis -----------------------------------------------------
 
-rhy_plot(LF_data,"AUC",y_lim=c(-6,50),y_lab="AUC Airway Resistance R<sub>rs</sub>(cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)") -> analysis_out
+rhy_plot(LF_data,"AUC",y_lim=c(-6,50),y_lab="AUC of Airway Resistance R<sub>rs</sub>(cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)") -> analysis_out
 
 p_auc <- analysis_out$combined
-ggsave(p_auc,filename="plots/flex_AUC.png",width=8,height=5)
+ggsave(p_auc,filename="plots/flex_AUC.png",width=10,height=5)
 
 # Max sinusoidal analysis -----------------------------------------------------
 
 rhy_plot(LF_data,"Max",y_lim=c(-.1,1.3),y_lab="Max Airway Resistance R<sub>rs</sub>(cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)") -> analysis_out
 
 p_max <- analysis_out$combined
-ggsave(p_max,filename="plots/flex_max.png",width=8,height=5)
+ggsave(p_max,filename="plots/flex_max.png",width=10,height=5)
