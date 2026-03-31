@@ -13,6 +13,8 @@ library(purrr)
 par_val<-"Cull_FV_RN"
 #par_val<-"Cull_FV_Rrs"
 
+source("functions.R")
+
 # load data ---------------------------------------------------------------
 read.xlsx("data/LungFunctionMasterDataSet.xlsx",sheet=2) -> animal_data # need this as some animals not in LFmaster
 read.xlsx("data/LFmaster.xlsx",sheet=2) -> animal_data_2
@@ -30,7 +32,7 @@ LF_data2 %>% filter(Parameter==par_val) %>% pivot_longer(cols=4:99,names_to = "A
 LF_data2 %>% rename(Sample=Animal.ID,Mch_conc=Mch_Conc,Value=value) %>%
   dplyr::select(-Parameter) -> LF_data2
 
-LF_data2 %>% filter(!is.na(Value)) -> LF_data
+LF_data2 %>% filter(!is.na(Value)) %>% filter(Sample!=514230)-> LF_data
 
 # mann whitney u on pairwise zts ----------------------------------
 
@@ -46,12 +48,16 @@ anova_pvals_upper <- dr_anova(param_formodel,"Upper","log10(params) ~ ZT * Treat
 
 anova_pvals_slope <- dr_anova(param_formodel,"Slope","log10(-params) ~ ZT * Treatment")
 
+anova_pvals_slope_geno <- dr_anova_gen(param_formodel,"Slope","log10(-params) ~ ZT*Genotype")
+
+anova_pvals_slope %>% filter(WT<0.05,KO<0.05)
+anova_pvals_slope_geno %>% filter(PBS<0.05,HDM<0.05)
 # plotting dose response curve --------------------------------------------
 
-p1<-dr_plot(LF_data,anova_pvals_slope,mw_results,c(0,2.5),y_lab="Maximum Airway Resistance R<sub>rs</sub>(cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)")
+p1<-dr_plot(LF_data,anova_pvals_slope,mw_results,c(0,2.25),y_lab="Mean Rn (cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)")
 p1
 
-png("plots/flex_meth_dose_response_LFmaster_RN.png", width = 2400, height = 1500, res = 300)  # adjust size/res as needed
+png("plots/flex_meth_dose_response_LFmaster_RN_v2.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
 grid.draw(
   p1
 )
@@ -61,16 +67,16 @@ dev.off()
 
 # AUC sinusoidal analysis -----------------------------------------------------
 
-rhy_plot(LF_data,"AUC",y_lim=c(-25,25),y_lab="AUC Airway Resistance R<sub>rs</sub>(cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)") -> analysis_out
+rhy_plot(LF_data,"AUC",y_lim=c(-25,25),y_lab="AUC of Rn (cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)") -> analysis_out
 
 p_auc <- analysis_out$combined
 p_auc
-ggsave(p_auc,filename="plots/flex_AUC_LFmaster_RN.png",width=8,height=5)
+ggsave(p_auc,filename="plots/flex_AUC_LFmaster_RN.png",width=10,height=5)
 
 # Max sinusoidal analysis -----------------------------------------------------
 
-rhy_plot(LF_data,"Max",y_lim=c(-.75,.75),y_lab="Max Airway Resistance R<sub>rs</sub>(cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)") -> analysis_out
+rhy_plot(LF_data,"Max",y_lim=c(-.75,.75),y_lab="Max Rn (cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)") -> analysis_out
 
 p_max <- analysis_out$combined
 p_max
-ggsave(p_max,filename="plots/flex_max_LFmaster_RN.png",width=8,height=5)
+ggsave(p_max,filename="plots/flex_max_LFmaster_RN.png",width=10,height=5)

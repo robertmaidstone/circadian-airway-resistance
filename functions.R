@@ -135,6 +135,36 @@ dr_anova <- function(param_formodel, parameter, formula_string){
   return(out)
 }
 
+dr_anova_gen <- function(param_formodel, parameter, formula_string){
+  # Check parameter exists
+  if(!parameter %in% param_formodel$Parameter){
+    stop("Error: unknown parameter")
+  }
+  # Convert the character string into a formula
+  model_formula <- as.formula(formula_string)
+  # WT model
+  aov_out_PBS <- summary(
+    aov(model_formula,
+        data = param_formodel %>% 
+          dplyr::filter(Treatment == "PBS", Parameter == parameter))
+  )
+  # KO model
+  aov_out_HDM <- summary(
+    aov(model_formula,
+        data = param_formodel %>% 
+          dplyr::filter(Treatment == "HDM", Parameter == parameter))
+  )
+  # Return p-values in a tidy data frame
+  out <- data.frame(
+    Variable = row.names(aov_out_PBS[[1]]),
+    PBS = aov_out_PBS[[1]]$`Pr(>F)`,
+    HDM = aov_out_HDM[[1]]$`Pr(>F)`
+  )
+  # Remove residual row
+  out <- out[-nrow(out), ]
+  return(out)
+}
+
 
 # function to run pairwise mann-whitney u tests ---------------------------
 
@@ -178,7 +208,7 @@ dr_MWU_pairwise <- function(LF_data,BH=T){
     mutate(p.adj = p.adjust(p.value, method = "BH"))}
   return(mw_results)
 }
-# p to stars --------------------------------------------------------------
+# p to ... --------------------------------------------------------------
 
 p_to_stars <- function(p){
   dplyr::case_when(
@@ -190,6 +220,15 @@ p_to_stars <- function(p){
   )
 }
 
+p_to_hashes <- function(p){
+dplyr::case_when(
+  p < 0.0001 ~ "####",
+  p < 0.001 ~ "###",
+  p < 0.01  ~ "##",
+  p < 0.05  ~ "#",
+  TRUE      ~ ""
+)
+}
 
 # extract sig text --------------------------------------------------------
 
@@ -219,7 +258,7 @@ dr_plot <- function(LF_data,
                     y_lab) {
   
   
-  mw_results %>% group_by(Genotype,Treatment) %>% filter(p.adj<0.05) %>% mutate(num = n()) %>% dplyr::select(num) -> ff
+  mw_results %>% group_by(Treatment) %>% filter(p.adj<0.05) %>% mutate(num = n()) %>% dplyr::select(num) -> ff
   if(dim(ff)[1]==0){xexpand<-0}else{xexpand<-max(ff$num,na.rm=T)}
   # Label ANOVA rows
   anova_pvals_slope$Variable <- c("ZT","Treatment","Interaction")
@@ -242,20 +281,21 @@ dr_plot <- function(LF_data,
   # }
   
   # Helper: format pairwise MW text + bracket positions
-  make_bracket_df <- function(df, t_data,Gen,Trt) {
+  make_bracket_df <- function(df, t_data,Gen) {
     maxmch <- t_data$Mch_conc %>% max
-    t_data_temp<- t_data%>%filter(Genotype == Gen,Treatment == Trt,Mch_conc==maxmch) %>%
-      mutate(ZT=as.double(as.character(ZT)))
+    t_data_temp<- t_data%>%filter(Genotype == Gen,Mch_conc==maxmch) %>%
+      mutate(ZT=as.double(as.character(ZT))) %>% 
+      mutate(id=paste(ZT,Treatment))
     
-    df %>%
-      left_join(t_data_temp %>% dplyr::select(ZT, Med_Value),
-                by = c("group1" = "ZT")) %>%
+    df %>% mutate(id1=paste(group1,Treatment),id2=paste(group2,Treatment)) %>%
+      left_join(t_data_temp %>% dplyr::select(id, Med_Value),
+                by = c("id1" = "id")) %>%
       rename(y = Med_Value) %>%
-      left_join(t_data_temp %>% dplyr::select(ZT, Med_Value),
-                by = c("group2" = "ZT")) %>%
+      left_join(t_data_temp %>% dplyr::select(id, Med_Value),
+                by = c("id2" = "id")) %>%
       rename(yend = Med_Value) %>%
       mutate(labelo = paste0("p = ", signif(p.adj, 3))) %>%
-      mutate(label = p_to_stars(p.adj))
+      mutate(label = ifelse(Treatment=="PBS",p_to_hashes(p.adj),p_to_stars(p.adj)))
   }
   
   # Loop over genotypes
@@ -263,12 +303,12 @@ dr_plot <- function(LF_data,
     
     # Create bracket positions
     brackets <- make_bracket_df(
-      mw_results%>% filter(Genotype == Gen, Treatment == "HDM"), t_data,
-      Gen,"HDM"
+      mw_results%>% filter(Genotype == Gen), t_data,
+      Gen
       
     )
     brackets<-brackets %>% filter(p.adj<0.05)
-    brackets <- brackets %>% mutate(xadj=row_number()*.1)
+    brackets <- brackets %>% mutate(xadj=(row_number())*.075)
     # ANOVA text
     slope_text <- extract_sig_text(anova_pvals_slope, Gen, prefix = "Slope ")
     sig_text <- slope_text
@@ -291,20 +331,23 @@ dr_plot <- function(LF_data,
         axis.text.x = element_text(angle = 45, hjust = 1)
       ) +
       ggtitle(gen_labels[which(Gen == c("WT","KO"))]) +
-      expand_limits(x = max(t_data$Mch_conc) * (1+xexpand/10)) +
+      expand_limits(x = max(t_data$Mch_conc) * (.5+xexpand/10)) +
       annotate("text",
                x = 1,
                y = y_lim[2],
                label = sig_text,
-               hjust = 0, vjust = 1, size = 4)
+               hjust = 0, vjust = 1, size = 4) +
+      scale_linetype_manual(name = "Treatment",
+                            values = c("PBS" = "solid", "HDM" = "dashed"),
+                            labels = c("PBS" = "#   PBS", "HDM" = "*   HDM"))
     
     # Add right‑side brackets
     p1 <- p1 +
       geom_segment(
         data = brackets,
         aes(
-          x = max(t_data$Mch_conc) * (1.07+xadj),
-          xend = max(t_data$Mch_conc) * (1.07+xadj),
+          x = max(t_data$Mch_conc) * (1.03+xadj),
+          xend = max(t_data$Mch_conc) * (1.03+xadj),
           y = y,
           yend = yend
         ),
@@ -313,8 +356,8 @@ dr_plot <- function(LF_data,
       geom_segment(
         data = brackets,
         aes(
-          x = max(t_data$Mch_conc) * (1.05+xadj),
-          xend = max(t_data$Mch_conc) * (1.07+xadj),
+          x = max(t_data$Mch_conc) * (1.01+xadj),
+          xend = max(t_data$Mch_conc) * (1.03+xadj),
           y = y,
           yend = y
         ),
@@ -323,8 +366,8 @@ dr_plot <- function(LF_data,
       geom_segment(
         data = brackets,
         aes(
-          x = max(t_data$Mch_conc) * (1.05+xadj),
-          xend = max(t_data$Mch_conc) * (1.07+xadj),
+          x = max(t_data$Mch_conc) * (1.01+xadj),
+          xend = max(t_data$Mch_conc) * (1.03+xadj),
           y = yend,
           yend = yend
         ),
@@ -333,7 +376,7 @@ dr_plot <- function(LF_data,
       geom_text(
         data = brackets,
         aes(
-          x = max(t_data$Mch_conc) * (1.09+xadj),
+          x = max(t_data$Mch_conc) * (1.05+xadj),
           y = (y+yend)/2,
           #label = paste0("ZT", group1, " vs ZT", group2, ": ", label)
           label = label
@@ -347,8 +390,20 @@ dr_plot <- function(LF_data,
   }
   
   # Combine WT | KO
-  p_comb <- (p_WT + theme(legend.position = "none")) |
-    (p_KO + theme(axis.title.y = element_blank()))
+  t_size <- 12
+  p_comb <- (p_WT + theme(legend.position = "none",
+                            ### text size
+                              axis.title.y = element_markdown(size = t_size),
+                              axis.text.x = element_text(size = t_size,margin = margin(t = 5)),
+                              axis.text.y = element_text(size = t_size),
+                          plot.margin = margin(b = 15)
+                            )) |
+    (p_KO + theme(axis.title.y = element_markdown(size = t_size, colour = NA),
+                  axis.text.x = element_text(size = t_size,margin = margin(t = 5)),
+                  axis.text.y = element_text(size = t_size),
+                  legend.text = element_text(size = t_size),
+                  legend.title = element_text(size = t_size),
+                  plot.margin = margin(b = 15)))
   
   return(p_comb)
 }
@@ -423,7 +478,7 @@ plot_rhy_funcs <- function(df, predict_values, annot_pvals, sig_line_pvals,
     ylab(y_lab) +
     ggtitle(Tr) +
     annotate("text", x = 1, y = max(y_limit), label = sig_text,
-             hjust = 0, vjust = 1, size = 4) +
+             hjust = 0, vjust = 1, size = 5) +
     ylim(y_limit) +
     theme_bw() +
     theme(
@@ -528,6 +583,17 @@ rhy_plot<-function(LF_data,Type,y_lim,y_lab){
   list_out[["plot_hdm"]] <- plot_rhy_funcs(sum_data,predict_values,
                                            annot_pvals = list_out[["nls_pvals"]],sig_line_pvals = list_out[["loglik_pvals"]],
                                            "HDM",y_axis=FALSE,y_lab=y_lab,y_lim=y_lim)
-  list_out$combined <- list_out$plot_pbs + list_out$plot_hdm
+  t_size <- 12
+  list_out$combined <- list_out$plot_pbs +
+    theme(axis.title.y = element_markdown(size = t_size),
+          axis.title.x = element_text(size = t_size),
+          axis.text.x = element_text(size = t_size),
+          axis.text.y = element_text(size = t_size)) +
+    list_out$plot_hdm +
+    theme(#axis.title.y = element_markdown(size = t_size,colour=NA),
+          axis.title.x = element_text(size = t_size),
+          axis.text.x = element_text(size = t_size),
+          axis.text.y = element_text(size = t_size),
+          legend.text = element_markdown(size = t_size))
   return(list_out)
 }
