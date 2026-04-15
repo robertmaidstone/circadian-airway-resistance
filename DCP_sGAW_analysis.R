@@ -56,7 +56,7 @@ dev.off()
 
 # AUC sinusoidal analysis -----------------------------------------------------
 
-rhy_plot(LF_data,"AUC",y_lim=c(-17.5,-2),y_lab="AUC sGAW (cm.H<sub>2</sub>O.sec<sup>-1</sup>)") -> analysis_out
+rhy_plot(LF_data,"AUC",y_lim=c(-17.5,-2),y_lab="AUC of sGAW (cm.H<sub>2</sub>O.sec<sup>-1</sup>)") -> analysis_out
 
 analysis_out$combined
 p_auc <- analysis_out$combined
@@ -67,5 +67,5 @@ ggsave(p_auc,filename="plots/sGAW_AUC.png",width=10,height=5)
 rhy_plot(LF_data,"Min",y_lim=c(-1,-.15),"Min sGAW (cm.H<sub>2</sub>O.sec<sup>-1</sup>)") -> analysis_out
 
 analysis_out$combined
-p_max <- analysis_out[["plot_pbs"]] + analysis_out[["plot_hdm"]]
+p_max <- analysis_out$combined
 ggsave(p_max,filename="plots/sGAW_min.png",width=10,height=5)
