@@ -11,7 +11,7 @@ library(purrr)
 
 # load data ---------------------------------------------------------------
 setwd("~/Amlan/AirwayResistance/")
-source("functions.R")
+source("functions_davidcomments.R")
 read.xlsx("data/AC_FVData_Complete.xlsx",sheet=5,fillMergedCells = TRUE) -> LF_data
 
 LF_data %>% filter(Mch_conc!=0) -> LF_data
