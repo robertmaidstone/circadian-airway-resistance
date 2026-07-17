@@ -9,7 +9,7 @@ library(broom)
 
 # load data ---------------------------------------------------------------
 setwd("~/Amlan/AirwayResistance/")
-source("functions.R")
+source("functions_davidcomments.R")
 
 read.xlsx("data/LungFunctionMasterDataSet.xlsx",sheet=2) -> animal_data
 read.xlsx("data/LungFunctionMasterDataSet.xlsx",sheet=1,fillMergedCells = TRUE) -> LF_data
@@ -47,28 +47,30 @@ anova_pvals_slope_geno %>% filter(PBS<0.05|HDM<0.05)
 # plotting dose response curve --------------------------------------------
 
 
-p1<-dr_plot(LF_data,anova_pvals_slope,mw_results,c(1,2.5),y_lab="Mean EF50 (ml.sec<sup>-1</sup>)")
+p1<-dr_plot(LF_data,anova_pvals_slope,mw_results,c(1,2.5),
+            y_lab="Mean EF50 (ml.sec<sup>-1</sup>)",
+            x_lab=expression("Methacholine Concentration (mg.mL"^"-1"*")"))
 p1
-png("plots/ef50_meth_dose_response.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
+png("plots_v2/ef50_meth_dose_response.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
 grid.draw(
   p1
 )
-grid.text( expression("Methacholine Concentration (mg.mL"^"-1"*")"), y = unit(0.015, "npc"), gp = gpar(fontsize = 12))
+#grid.text( expression("Methacholine Concentration (mg.mL"^"-1"*")"), y = unit(0.015, "npc"), gp = gpar(fontsize = 12))
 dev.off()
 
 
 # AUC sinusoidal analysis -----------------------------------------------------
 
-rhy_plot(LF_data,"AUC",y_lim=c(-11,15),"AUC of EF50 (ml.sec<sup>-1</sup>)") -> analysis_out
+rhy_plot(LF_data,"AUC",y_lim=c(-11,15),"Log10 AUC of EF50 (ml.sec<sup>-1</sup>)") -> analysis_out
 
 analysis_out$combined
 p_auc <- analysis_out$combined
-ggsave(p_auc,filename="plots/EF50_AUC.png",width=10,height=5)
+ggsave(p_auc,filename="plots_v2/EF50_AUC.png",width=10,height=5)
 
 # Max sinusoidal analysis -----------------------------------------------------
 
-rhy_plot(LF_data,"Max",y_lim=c(-.1,.9),"Max EF50 (ml.sec<sup>-1</sup>)") -> analysis_out
+rhy_plot(LF_data,"Max",y_lim=c(-.1,.9),"Log10 Max EF50 (ml.sec<sup>-1</sup>)") -> analysis_out
 
 analysis_out$combined
 p_max <- analysis_out$combined
-ggsave(p_max,filename="plots/EF50_max.png",width=10,height=5)
+ggsave(p_max,filename="plots_v2/EF50_max.png",width=10,height=5)

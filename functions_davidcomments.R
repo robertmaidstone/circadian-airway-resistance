@@ -255,8 +255,8 @@ dr_plot <- function(LF_data,
                     anova_pvals_slope,
                     mw_results,
                     y_lim,
-                    y_lab,
-                    x_lab) {
+                    y_lab="",
+                    x_lab="") {
   
   
   mw_results %>% group_by(Treatment) %>% filter(p.adj<0.05) %>% mutate(num = n()) %>% dplyr::select(num) -> ff
@@ -309,7 +309,7 @@ dr_plot <- function(LF_data,
       
     )
     brackets<-brackets %>% filter(p.adj<0.05)
-    brackets <- brackets %>% mutate(xadj=(row_number())*.075)
+    brackets <- brackets %>% mutate(xadj=(row_number())*.06)
     # ANOVA text
     slope_text <- extract_sig_text(anova_pvals_slope, Gen, prefix = "Slope ")
     sig_text <- slope_text
@@ -383,9 +383,11 @@ dr_plot <- function(LF_data,
           #label = paste0("ZT", group1, " vs ZT", group2, ": ", label)
           label = label
         ),
-        hjust = 0,
+        vjust = 0.7,
+        hjust = 0.5,
         size = 3,
-        inherit.aes = FALSE
+        inherit.aes = FALSE,
+        angle=90
       )
     
     assign(paste0("p_", Gen), p1)

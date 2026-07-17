@@ -9,7 +9,7 @@ library(broom)
 
 # load data ---------------------------------------------------------------
 setwd("~/Amlan/AirwayResistance/")
-source("functions.R")
+source("functions_davidcomments.R")
 
 read.xlsx("data/LungFunctionMasterDataSet.xlsx",sheet=2) -> animal_data
 read.xlsx("data/LungFunctionMasterDataSet.xlsx",sheet=1,fillMergedCells = TRUE) -> LF_data
@@ -43,20 +43,22 @@ anova_pvals_slope_geno %>% filter(PBS<0.05|HDM<0.05)
 
 # plotting dose response curve --------------------------------------------
 
-p1<-dr_plot(LF_data,anova_pvals_slope,mw_results,c(.2,.6),y_lab="Median sGAW (cm.H<sub>2</sub>O.sec<sup>-1</sup>)")
+p1<-dr_plot(LF_data,anova_pvals_slope,mw_results,c(.2,.6),
+            y_lab="Median sGAW (cm.H<sub>2</sub>O.sec<sup>-1</sup>)",
+            x_lab=expression("Methacholine Concentration (mg.mL"^"-1"*")"))
 p1
 
-png("plots/sGAW_meth_dose_response.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
+png("plots_v2/sGAW_meth_dose_response.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
 grid.draw(
   p1
 )
-grid.text( expression("Methacholine Concentration (mg.mL"^"-1"*")"), y = unit(0.015, "npc"), gp = gpar(fontsize = 12))
+#grid.text( expression("Methacholine Concentration (mg.mL"^"-1"*")"), y = unit(0.015, "npc"), gp = gpar(fontsize = 12))
 dev.off()
 
 
 # AUC sinusoidal analysis -----------------------------------------------------
 
-rhy_plot(LF_data,"AUC",y_lim=c(-17.5,-2),y_lab="AUC of sGAW (cm.H<sub>2</sub>O.sec<sup>-1</sup>)") -> analysis_out
+rhy_plot(LF_data,"AUC",y_lim=c(-17.5,-2),y_lab="Log10 AUC of sGAW (cm.H<sub>2</sub>O.sec<sup>-1</sup>)") -> analysis_out
 
 analysis_out$combined
 p_auc <- analysis_out$combined
@@ -64,8 +66,8 @@ ggsave(p_auc,filename="plots/sGAW_AUC.png",width=10,height=5)
 
 # Max sinusoidal analysis -----------------------------------------------------
 
-rhy_plot(LF_data,"Min",y_lim=c(-1,-.15),"Min sGAW (cm.H<sub>2</sub>O.sec<sup>-1</sup>)") -> analysis_out
+rhy_plot(LF_data,"Min",y_lim=c(-1,-.15),"Log10 Min sGAW (cm.H<sub>2</sub>O.sec<sup>-1</sup>)") -> analysis_out
 
 analysis_out$combined
 p_max <- analysis_out$combined
-ggsave(p_max,filename="plots/sGAW_min.png",width=10,height=5)
+ggsave(p_max,filename="plots_v2/sGAW_min.png",width=10,height=5)
