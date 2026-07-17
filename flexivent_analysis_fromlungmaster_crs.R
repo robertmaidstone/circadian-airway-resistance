@@ -9,7 +9,7 @@ library(lme4)
 library(rstatix)
 library(purrr)
 
-source("functions.r")
+source("functions_davidcomments.R")
 
 #par_val<-"Cull_FV_Rrs"
 par_val<-"Cull_FV_Crs"
@@ -56,29 +56,31 @@ anova_pvals_slope_geno %>% filter(PBS<0.05|HDM<0.05)
 
 # plotting dose response curve --------------------------------------------
 
-p1<-dr_plot(LF_data,anova_pvals_slope,mw_results,c(0,1.3),y_lab="Mean crs (mL(cm.H<sub>2</sub>O)<sup>-1</sup>)")
+p1<-dr_plot(LF_data,anova_pvals_slope,mw_results,c(0,1.3),
+            y_lab="Mean crs (mL(cm.H<sub>2</sub>O)<sup>-1</sup>)",
+            x_lab=expression("Methacholine Concentration (mg.mL"^"-1"*")"))
 p1
 
-png("plots/flex_meth_dose_response_LFmaster_crs.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
+png("plots_v2/flex_meth_dose_response_LFmaster_crs.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
 grid.draw(
   p1
 )
-grid.text( expression("Methacholine Concentration (mg.mL"^"-1"*")"), y = unit(0.03, "npc"), gp = gpar(fontsize = 12))
+#grid.text( expression("Methacholine Concentration (mg.mL"^"-1"*")"), y = unit(0.03, "npc"), gp = gpar(fontsize = 12))
 dev.off()
 
 
 # AUC sinusoidal analysis -----------------------------------------------------
 
-rhy_plot(LF_data,"AUC",y_lim=c(-100,50),y_lab="AUC of crs (mL(cm.H<sub>2</sub>O)<sup>-1</sup>)") -> analysis_out
+rhy_plot(LF_data,"AUC",y_lim=c(-100,50),y_lab="Log10 AUC of crs (mL(cm.H<sub>2</sub>O)<sup>-1</sup>)") -> analysis_out
 
 p_auc <- analysis_out$combined
 p_auc
-ggsave(p_auc,filename="plots/flex_AUC_LFmaster_crs.png",width=10,height=5)
+ggsave(p_auc,filename="plots_v2/flex_AUC_LFmaster_crs.png",width=10,height=5)
 
 # Max sinusoidal analysis -----------------------------------------------------
 
-rhy_plot(LF_data,"Max",y_lim=c(-2,2),y_lab="Max crs (mL(cm.H<sub>2</sub>O)<sup>-1</sup>)") -> analysis_out
+rhy_plot(LF_data,"Max",y_lim=c(-2,2),y_lab="Log10 Max crs (mL(cm.H<sub>2</sub>O)<sup>-1</sup>)") -> analysis_out
 
 p_max <- analysis_out$combined
 p_max
-ggsave(p_max,filename="plots/flex_max_LFmaster_crs.png",width=10,height=5)
+ggsave(p_max,filename="plots_v2/flex_max_LFmaster_crs.png",width=10,height=5)
