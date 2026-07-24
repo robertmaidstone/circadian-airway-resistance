@@ -342,7 +342,6 @@ dr_plot <- function(LF_data,
       scale_linetype_manual(name = "Treatment",
                             values = c("PBS" = "solid", "HDM" = "dashed"),
                             labels = c("PBS" = "#   PBS", "HDM" = "*   HDM"))
-    
     # Add right‑side brackets
     p1 <- p1 +
       geom_segment(
@@ -376,7 +375,21 @@ dr_plot <- function(LF_data,
         inherit.aes = FALSE
       ) +
       geom_text(
-        data = brackets,
+        data = brackets %>% filter(Treatment=="HDM"),
+        aes(
+          x = max(t_data$Mch_conc) * (1.05+xadj),
+          y = (y+yend)/2,
+          #label = paste0("ZT", group1, " vs ZT", group2, ": ", label)
+          label = label
+        ),
+        vjust = 0.7,
+        hjust = 0.5,
+        size = 5,
+        inherit.aes = FALSE,
+        angle=90
+      )+
+      geom_text(
+        data = brackets %>% filter(Treatment=="PBS"),
         aes(
           x = max(t_data$Mch_conc) * (1.05+xadj),
           y = (y+yend)/2,
@@ -412,6 +425,7 @@ dr_plot <- function(LF_data,
   return(p_comb)
 }
 
+#######
 fit_nls_model <- function(df) {
   nls(
     AUC ~ I + A * sin(2*pi/24*ZT + phi) +
@@ -601,3 +615,204 @@ rhy_plot<-function(LF_data,Type,y_lim,y_lab){
           legend.text = element_markdown(size = t_size))
   return(list_out)
 }
+
+####################
+
+
+rhy_plot_bar<-function(LF_data,Type,y_lim,y_lab){
+  treatments <- c("PBS", "HDM")
+  genotypes  <- c("WT", "KO")
+  list_out <- list()
+  
+  ## data manip
+  
+  LF_data %>% 
+    mutate(Value=log10(Value)) %>%
+    arrange(across(all_of(c("Sample", "ZT", "Genotype", "Treatment"))), Mch_conc) %>%
+    group_by(Sample,ZT,Genotype,Treatment) %>%
+    mutate(Max_Value=max(Value,na.rm=T)) %>%
+    mutate(Min_Value=min(Value,na.rm=T)) %>%
+    mutate(AUC = sum(diff(Mch_conc) * (Value[-1] + Value[-length(Value)]) / 2)) %>%
+    #mutate(AUC = sum(diff(Mch_conc) * (Value[-1] + Value[-4]) / 2,na.rm=T)) %>%
+    dplyr::select(Sample,Max_Value,Min_Value,AUC) %>%
+    distinct %>% ungroup -> sum_data
+  if(Type=="Max"){
+    sum_data <- sum_data %>% mutate(AUC=Max_Value)
+    #y_lab <- "Max Airway Resistance R<sub>rs</sub>(cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)"
+  }else if(Type=="Min"){
+    sum_data <- sum_data %>% mutate(AUC=Min_Value)
+    #y_lab<-"Min Airway Resistance R<sub>rs</sub>(cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)"
+  }else if(Type=="AUC"){
+    # y_lab<-"AUC Airway Resistance R<sub>rs</sub>(cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)"
+  }else{
+    stop("Error type not recognised")
+  }
+  ## nls model fitting
+  pval_mat <- lapply(treatments, function(trt) {
+    df_sub <- sum_data %>% dplyr::filter(Treatment == trt)
+    model  <- fit_nls_model(df_sub)
+    summary(model)$parameters[c("A1","phi1","I1"), "Pr(>|t|)"]
+  })
+  list_out[["nls_pvals"]] <- do.call(cbind, pval_mat)
+  colnames(list_out[["nls_pvals"]]) <- treatments
+  list_out[["nls_pvals"]]<-as.data.frame(list_out[["nls_pvals"]]) %>% mutate(Variable=rownames(list_out[["nls_pvals"]])) %>%
+    mutate(Variable= dplyr::case_when(
+      Variable =="A1" ~ "Amplitude",
+      Variable =="phi1" ~ "Phase",
+      Variable =="I1" ~ "Mesor"
+    ))
+  
+  ## log likelihood test comparing rhythmic to constant
+  results <- expand.grid(Genotype = genotypes,
+                         Treatment = treatments,
+                         stringsAsFactors = FALSE)
+  
+  results$p_value <- mapply(function(g, t) {
+    df_sub <- sum_data %>% 
+      dplyr::filter(Genotype == g, Treatment == t)
+    
+    fit_lrtest(df_sub)
+  }, results$Genotype, results$Treatment)
+  results %>% pivot_wider(names_from = Treatment,values_from = p_value) %>%
+    as.data.frame()-> results 
+  list_out[["loglik_pvals"]] <- results
+  
+  ## plotting
+  
+  lm(AUC~1+Genotype*Treatment*sin(2*pi/24*ZT) + Genotype*Treatment*cos(2*pi/24*ZT)+Genotype*Treatment,data=sum_data) -> lm_sGAW
+  
+  predict_values <- expand.grid(
+    ZT = seq(from=0,to=24,length.out=13),
+    Treatment = unique(sum_data$Treatment),
+    Genotype = unique(sum_data$Genotype)
+    #Animal.ID = unique(sum_data_sGAW$Animal.ID)
+  )
+  
+  pred_resp <- predict.lm(lm_sGAW, newdata = predict_values, se.fit=TRUE, interval="confidence", level=0.95)
+  predict_values$Predicted_Response <- pred_resp$fit[,1]
+  predict_values$Predicted_Response_LCI <- pred_resp$fit[,2]
+  predict_values$Predicted_Response_UCI <- pred_resp$fit[,3]
+  ##
+  list_out[["plot_pbs"]] <- plot_rhy_funcs_bar(sum_data,predict_values,
+                                           annot_pvals = list_out[["nls_pvals"]],sig_line_pvals = list_out[["loglik_pvals"]],
+                                           "PBS",legend=FALSE,y_lab=y_lab,y_lim=y_lim)
+  list_out[["plot_hdm"]] <- plot_rhy_funcs_bar(sum_data,predict_values,
+                                           annot_pvals = list_out[["nls_pvals"]],sig_line_pvals = list_out[["loglik_pvals"]],
+                                           "HDM",legend=FALSE,y_axis=FALSE,y_lab=y_lab,y_lim=y_lim)
+  t_size <- 12
+  list_out$combined <- list_out$plot_pbs +
+    theme(axis.title.y = element_markdown(size = t_size),
+          axis.title.x = element_text(size = t_size),
+          axis.text.x = element_text(size = t_size,angle = 45, hjust = 1),
+          axis.text.y = element_text(size = t_size)) +
+    xlab("") +
+    list_out$plot_hdm +
+    theme(#axis.title.y = element_markdown(size = t_size,colour=NA),
+      axis.title.x = element_text(size = t_size),
+      axis.text.x = element_text(size = t_size,angle = 45, hjust = 1),
+      axis.text.y = element_text(size = t_size),
+      legend.text = element_markdown(size = t_size))+
+    xlab("")
+  return(list_out)
+}
+
+
+###
+
+plot_rhy_funcs_bar <- function(df, predict_values, annot_pvals, sig_line_pvals,
+                           Tr, y_axis = TRUE, legend = TRUE, y_lab, y_lim) {
+  
+  col_vec    <- c("#0072B2", "#E69F00")
+  gen_labels <- c("WT", "CCSP-Reverbα KO")
+  y_limit    <- y_lim
+  # --- 1. Prepare significance text -----------------------------------------
+  sig_text <- extract_sig_text(annot_pvals, Tr, prefix = "")
+  # --- 2. Prepare prediction dataframe --------------------------------------
+  pred_df <- predict_values %>%
+    left_join(
+      sig_line_pvals %>%
+        pivot_longer(cols = -1, names_to = "Treatment", values_to = "Linetype"),
+      by = c("Treatment", "Genotype")
+    ) %>%
+    mutate(
+      Linetype = Linetype < 0.05,
+      Genotype = factor(Genotype, levels = c("WT", "KO"), labels = gen_labels)
+    )
+  # --- 3. Prepare observed data ---------------------------------------------
+  df_plot <- df %>%
+    filter(Treatment == Tr) %>%
+    mutate(Genotype = factor(Genotype, levels = c("WT", "KO"), labels = gen_labels))
+
+# shift x-axis ------------------------------------------------------------
+
+  df_plot <- df %>%
+    filter(Treatment == Tr) %>%
+    mutate(
+      Genotype = factor(Genotype, levels = c("WT", "KO"), labels = gen_labels),
+      ZT_shift = ifelse(Genotype == "WT", ZT, ZT + 36)
+    )
+  
+  pred_df <- pred_df %>%
+    mutate(
+      ZT_shift = ifelse(Genotype == "WT", ZT, ZT + 36)
+    )  
+  # --- 4. Build the base plot ------------------------------------------------
+  p <- ggplot(df_plot, aes(x = ZT_shift, y = AUC, colour = Genotype)) +
+    geom_point(colour="Grey") +
+    geom_errorbar(
+      data = pred_df %>% filter(Treatment == Tr,ZT %in% c(0,6,12,18)),
+      aes(ymax = Predicted_Response_UCI,
+          ymin = Predicted_Response_LCI,
+          y=NULL),
+      width=1.5,
+      colour="Grey"
+    ) +
+    geom_col(
+      data = pred_df %>% filter(Treatment == Tr,ZT %in% c(0,6,12,18)),
+      aes(y = Predicted_Response,x=ZT_shift),
+      fill=NA,
+      linewidth = 1,
+      colour="Grey"
+    ) +
+    geom_line(
+      data = pred_df %>% filter(Treatment == Tr),
+      aes(y = Predicted_Response, linetype = Linetype),
+      linewidth = 1
+    ) +
+    geom_vline(xintercept = 30, linetype="dashed",color = "black")+
+    scale_colour_manual(values = col_vec) +
+    scale_fill_manual(values = col_vec) +
+    scale_linetype_manual(values = c("dashed", "solid"), guide = "none") +
+    scale_x_continuous(    breaks = c(0,6,12,18, 24,30,36,42,48,54,60),
+                           labels = c("ZT0","ZT6","ZT12","ZT18","","", "ZT0","ZT6","ZT12","ZT18","")) +
+    guides(linetype = "none") +
+    ylab(y_lab) +
+    ggtitle(Tr) +
+    annotate("text", x = -2, y = max(y_limit), label = sig_text,
+             hjust = 0, vjust = 1, size = 5) +
+    ylim(y_limit) +
+    #coord_cartesian(clip = "off")+
+    theme_bw() +
+    theme(
+      axis.title.x = element_blank(),
+      axis.title.y = element_markdown(),
+      legend.position = "none"#,
+      #plot.margin = margin(20, 10, 40, 10)
+    )  
+  # --- 5. Legend logic -------------------------------------------------------
+  if (legend) {
+    p <- p + theme(
+      legend.position = c(0.75, 0.9),
+      legend.title = element_blank(),
+      legend.text = element_markdown(),
+      legend.background = element_blank()
+    ) +
+      guides(fill = guide_legend(override.aes = list(colour = col_vec,alpha=1),drop=FALSE))
+  }
+  # --- 6. Y-axis logic -------------------------------------------------------
+  if (!y_axis) {
+    p <- p + theme(axis.title.y = element_blank())
+  }
+  return(p)
+}
+
