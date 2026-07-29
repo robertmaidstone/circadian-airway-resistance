@@ -758,21 +758,21 @@ plot_rhy_funcs_bar <- function(df, predict_values, annot_pvals, sig_line_pvals,
     )  
   # --- 4. Build the base plot ------------------------------------------------
   p <- ggplot(df_plot, aes(x = ZT_shift, y = AUC, colour = Genotype)) +
-    geom_point(colour="Grey") +
+    geom_col(
+      data = pred_df %>% filter(Treatment == Tr,ZT %in% c(0,6,12,18)),
+      aes(y = Predicted_Response,x=ZT_shift),
+      fill="grey95",
+      linewidth = .75,
+      colour="grey"
+    ) +
+    geom_point(colour="grey") +
     geom_errorbar(
       data = pred_df %>% filter(Treatment == Tr,ZT %in% c(0,6,12,18)),
       aes(ymax = Predicted_Response_UCI,
           ymin = Predicted_Response_LCI,
           y=NULL),
       width=1.5,
-      colour="Grey"
-    ) +
-    geom_col(
-      data = pred_df %>% filter(Treatment == Tr,ZT %in% c(0,6,12,18)),
-      aes(y = Predicted_Response,x=ZT_shift),
-      fill=NA,
-      linewidth = 1,
-      colour="Grey"
+      colour="grey"
     ) +
     geom_line(
       data = pred_df %>% filter(Treatment == Tr),
@@ -780,11 +780,13 @@ plot_rhy_funcs_bar <- function(df, predict_values, annot_pvals, sig_line_pvals,
       linewidth = 1
     ) +
     geom_vline(xintercept = 30, linetype="dashed",color = "black")+
+    geom_hline(yintercept = 0,color = "grey",size=.75)+
     scale_colour_manual(values = col_vec) +
     scale_fill_manual(values = col_vec) +
     scale_linetype_manual(values = c("dashed", "solid"), guide = "none") +
     scale_x_continuous(    breaks = c(0,6,12,18, 24,30,36,42,48,54,60),
                            labels = c("ZT0","ZT6","ZT12","ZT18","","", "ZT0","ZT6","ZT12","ZT18","")) +
+    #scale_y_continuous(expand = expansion(mult = c(0, 0.1))) +
     guides(linetype = "none") +
     ylab(y_lab) +
     ggtitle(Tr) +
