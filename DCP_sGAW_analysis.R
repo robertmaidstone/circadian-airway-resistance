@@ -58,7 +58,7 @@ dev.off()
 
 # AUC sinusoidal analysis -----------------------------------------------------
 
-rhy_plot_bar(LF_data,"AUC",y_lim=c(-17.5,1),y_lab="AUC of sGAW (cm.H<sub>2</sub>O.sec<sup>-1</sup>)") -> analysis_out
+rhy_plot_bar(LF_data,"AUC",y_lim=c(-17.5,2),y_lab="AUC of sGAW (cm.H<sub>2</sub>O.sec<sup>-1</sup>)") -> analysis_out
 
 analysis_out$combined
 p_auc <- analysis_out$combined
