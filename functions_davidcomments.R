@@ -721,7 +721,6 @@ rhy_plot_bar<-function(LF_data,Type,y_lim,y_lab){
 
 plot_rhy_funcs_bar <- function(df, predict_values, annot_pvals, sig_line_pvals,
                            Tr, y_axis = TRUE, legend = TRUE, y_lab, y_lim) {
-  
   col_vec    <- c("#0072B2", "#E69F00")
   gen_labels <- c("WT", "CCSP-Reverbα KO")
   y_limit    <- y_lim

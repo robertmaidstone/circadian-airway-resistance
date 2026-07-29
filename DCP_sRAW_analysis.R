@@ -66,16 +66,31 @@ dev.off()
 
 # AUC sinusoidal analysis -----------------------------------------------------
 
-rhy_plot(LF_data,"AUC",y_lim=c(5,22),y_lab="Log10 AUC of sRAW (cm.H<sub>2</sub>O.sec)") -> analysis_out
+rhy_plot_bar(LF_data,"AUC",y_lim=c(0,22),y_lab="AUC of sRAW (cm.H<sub>2</sub>O.sec)") -> analysis_out
 
 analysis_out$combined
 p_auc <- analysis_out$combined
-ggsave(p_auc,filename="plots_v2/sRAW_AUC.png",width=10,height=5)
-
+png("plots_v2/sRAW_AUC_bar_v3.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
+grid.draw(
+  p_auc
+)
+grid.text( "WT", y = unit(0.03, "npc"),x = unit(0.175, "npc"), gp = gpar(fontsize = 12))
+grid.text( "CCSP-Reverba KO", y = unit(0.03, "npc"),x = unit(0.4, "npc"), gp = gpar(fontsize = 12))
+grid.text( "WT", y = unit(0.03, "npc"),x = unit(0.66, "npc"), gp = gpar(fontsize = 12))
+grid.text( "CCSP-Reverba KO", y = unit(0.03, "npc"),x = unit(0.875, "npc"), gp = gpar(fontsize = 12))
+dev.off()
 # Max sinusoidal analysis -----------------------------------------------------
 
-rhy_plot(LF_data,"Max",y_lim=c(0.4,1.2),y_lab="Log10 Max sRAW (cm.H<sub>2</sub>O.sec)") -> analysis_out
+rhy_plot_bar(LF_data,"Max",y_lim=c(-.1,1.2),y_lab="Max sRAW (cm.H<sub>2</sub>O.sec)") -> analysis_out
 
 analysis_out$combined
 p_max <- analysis_out$combined
-ggsave(p_max,filename="plots_v2/sRAW_max.png",width=10,height=5)
+png("plots_v2/sRAW_max.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
+grid.draw(
+  p_max
+)
+grid.text( "WT", y = unit(0.03, "npc"),x = unit(0.175, "npc"), gp = gpar(fontsize = 12))
+grid.text( "CCSP-Reverba KO", y = unit(0.03, "npc"),x = unit(0.4, "npc"), gp = gpar(fontsize = 12))
+grid.text( "WT", y = unit(0.03, "npc"),x = unit(0.66, "npc"), gp = gpar(fontsize = 12))
+grid.text( "CCSP-Reverba KO", y = unit(0.03, "npc"),x = unit(0.875, "npc"), gp = gpar(fontsize = 12))
+dev.off()
