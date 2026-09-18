@@ -16,7 +16,7 @@ read.xlsx("data/LungFunctionMasterDataSet.xlsx",sheet=1,fillMergedCells = TRUE) 
 ###
 LF_data %>% filter(Parameter=="DCP_EF50") %>% pivot_longer(cols=4:39,names_to = "Animal.ID") %>%
   group_by(`Animal.ID`,ZT) %>%
-  filter(Mch_Conc!=0) %>%
+  #filter(Mch_Conc!=0) %>%
   #mutate(value=log10(value)) %>%
   merge(animal_data,by="Animal.ID")-> LF_data
 
@@ -51,21 +51,30 @@ p1<-dr_plot(LF_data,anova_pvals_slope,mw_results,c(1,2.5),
             y_lab="Mean EF50 (ml.sec<sup>-1</sup>)",
             x_lab=expression("Methacholine Concentration (mg.mL"^"-1"*")"))
 p1
-png("plots_v2/ef50_meth_dose_response.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
+png("plots_v3/ef50_meth_dose_response.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
 grid.draw(
   p1
 )
 #grid.text( expression("Methacholine Concentration (mg.mL"^"-1"*")"), y = unit(0.015, "npc"), gp = gpar(fontsize = 12))
 dev.off()
 
-
+p1<-dr_plot(LF_data,anova_pvals_slope,mw_results,c(0.5,3),
+            y_lab="Mean EF50 (ml.sec<sup>-1</sup>)",
+            x_lab=expression("Methacholine Concentration (mg.mL"^"-1"*")"),errorbar = T)
+p1
+png("plots_v3/ef50_meth_dose_response_eb.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
+grid.draw(
+  p1
+)
+#grid.text( expression("Methacholine Concentration (mg.mL"^"-1"*")"), y = unit(0.015, "npc"), gp = gpar(fontsize = 12))
+dev.off()
 # AUC sinusoidal analysis -----------------------------------------------------
 
 rhy_plot_bar(LF_data,"AUC",y_lim=c(-11,15),"AUC of EF50 (ml.sec<sup>-1</sup>)") -> analysis_out
 
 analysis_out$combined
 p_auc <- analysis_out$combined
-png("plots_v2/EF50_AUC_bar_v3.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
+png("plots_v3/EF50_AUC_bar_v3.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
 grid.draw(
   p_auc
 )
@@ -80,7 +89,7 @@ rhy_plot_bar(LF_data,"Max",y_lim=c(-.1,.9),"Max EF50 (ml.sec<sup>-1</sup>)") -> 
 
 analysis_out$combined
 p_max <- analysis_out$combined
-png("plots_v2/EF50_max_bar.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
+png("plots_v3/EF50_max_bar.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
 grid.draw(
   p_max
 )

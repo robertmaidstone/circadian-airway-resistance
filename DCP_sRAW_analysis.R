@@ -16,7 +16,7 @@ read.xlsx("data/LungFunctionMasterDataSet.xlsx",sheet=1,fillMergedCells = TRUE) 
 ###
 LF_data %>% filter(Parameter=="DCP_sRAW") %>% pivot_longer(cols=4:39,names_to = "Animal.ID") %>%
   group_by(`Animal.ID`,ZT) %>%
-  filter(Mch_Conc!=0) %>%
+ # filter(Mch_Conc!=0) %>%
   merge(animal_data,by="Animal.ID")-> LF_data
 
 LF_data %>% rename(Sample=Animal.ID,Mch_conc=Mch_Conc,Value=value) %>%
@@ -44,12 +44,12 @@ anova_pvals_slope_geno %>% filter(PBS<0.05|HDM<0.05)
 
 # plotting dose response curve --------------------------------------------
 
-p1 <- dr_plot(LF_data,anova_pvals_slope,mw_results,c(2,7.5),
+p1 <- dr_plot(LF_data,anova_pvals_slope,mw_results,c(1.5,7.5),
               y_lab="Mean sRAW (cm.H<sub>2</sub>O.sec)",
               x_lab=expression("Methacholine Concentration (mg.mL"^"-1"*")"))
 p1
 
-png("plots_v2/sRAW_meth_dose_response.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
+png("plots_v3/sRAW_meth_dose_response.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
 grid.draw(
     patchworkGrob(p1)
 )
@@ -63,6 +63,24 @@ grid.text(
 #grid.text( expression("Methacholine Concentration (mg.mL"^"-1"*")"), y = unit(0.015, "npc"), gp = gpar(fontsize = 12))
 dev.off()
 
+p1 <- dr_plot(LF_data,anova_pvals_slope,mw_results,c(1.5,8),
+              y_lab="Mean sRAW (cm.H<sub>2</sub>O.sec)",
+              x_lab=expression("Methacholine Concentration (mg.mL"^"-1"*")"),errorbar = T)
+p1
+
+png("plots_v3/sRAW_meth_dose_response_eb.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
+grid.draw(
+  patchworkGrob(p1)
+)
+grid.text(
+  "HDM slope\nchange by\ngenotype *",
+  x = unit(0.89, "npc"),   # horizontal position
+  y = unit(0.23, "npc"),   # vertical position
+  just = "left",
+  gp = gpar(fontsize = 12)
+)
+#grid.text( expression("Methacholine Concentration (mg.mL"^"-1"*")"), y = unit(0.015, "npc"), gp = gpar(fontsize = 12))
+dev.off()
 
 # AUC sinusoidal analysis -----------------------------------------------------
 
@@ -70,7 +88,7 @@ rhy_plot_bar(LF_data,"AUC",y_lim=c(0,22),y_lab="AUC of sRAW (cm.H<sub>2</sub>O.s
 
 analysis_out$combined
 p_auc <- analysis_out$combined
-png("plots_v2/sRAW_AUC_bar_v3.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
+png("plots_v3/sRAW_AUC_bar_v3.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
 grid.draw(
   p_auc
 )
@@ -85,7 +103,7 @@ rhy_plot_bar(LF_data,"Max",y_lim=c(-.1,1.2),y_lab="Max sRAW (cm.H<sub>2</sub>O.s
 
 analysis_out$combined
 p_max <- analysis_out$combined
-png("plots_v2/sRAW_max.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
+png("plots_v3/sRAW_max.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
 grid.draw(
   p_max
 )

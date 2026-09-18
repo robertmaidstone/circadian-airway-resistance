@@ -256,7 +256,8 @@ dr_plot <- function(LF_data,
                     mw_results,
                     y_lim,
                     y_lab="",
-                    x_lab="") {
+                    x_lab="",
+                    errorbar=FALSE) {
   
   
   mw_results %>% group_by(Treatment) %>% filter(p.adj<0.05) %>% mutate(num = n()) %>% dplyr::select(num) -> ff
@@ -269,7 +270,13 @@ dr_plot <- function(LF_data,
   # Precompute median values for plotting
   t_data <- LF_data %>%
     group_by(ZT, Genotype, Treatment, Mch_conc) %>%
-    summarise(Med_Value = mean(Value, na.rm = TRUE), .groups = "drop") %>%
+    summarise( Med_Value = mean(Value, na.rm = TRUE),
+               SD = sd(Value, na.rm = TRUE),
+               N = dplyr::n(),
+               SEM = SD / sqrt(N),
+               LCL = Med_Value - SEM,
+               UCL = Med_Value + SEM,
+               .groups = "drop") %>%
     mutate(ZT = factor(ZT, levels = sort(unique(ZT)), ordered = TRUE))
   
   # Helper: format ANOVA text
@@ -319,7 +326,15 @@ dr_plot <- function(LF_data,
       filter(Genotype == Gen) %>%
       ggplot(aes(x = Mch_conc, y = Med_Value)) +
       geom_line(aes(linetype = Treatment, color = ZT)) +
-      geom_point(aes(color = ZT)) +
+      geom_point(aes(color = ZT))
+    
+    if(errorbar==TRUE){
+      p1 <- p1 +
+      geom_errorbar(
+        aes(ymin = LCL, ymax = UCL, color = ZT),
+        width = 2
+      ) }
+     p1<- p1 +
       scale_x_continuous(breaks = c(0, 3.12, 6.25, 12.5, 25, 50)) +
       scale_color_manual(values = c("#0072B2","#E69F00","#D55E00","#009E73")) +
       theme_bw() +
@@ -584,7 +599,7 @@ rhy_plot<-function(LF_data,Type,y_lim,y_lab){
   lm(AUC~1+Genotype*Treatment*sin(2*pi/24*ZT) + Genotype*Treatment*cos(2*pi/24*ZT)+Genotype*Treatment,data=sum_data) -> lm_sGAW
   
   predict_values <- expand.grid(
-    ZT = seq(from=0,to=24,length.out=12),
+    ZT = seq(from=0,to=18,length.out=12),
     Treatment = unique(sum_data$Treatment),
     Genotype = unique(sum_data$Genotype)
     #Animal.ID = unique(sum_data_sGAW$Animal.ID)
@@ -659,7 +674,7 @@ rhy_plot_bar<-function(LF_data,Type,y_lim,y_lab){
     mutate(Variable= dplyr::case_when(
       Variable =="A1" ~ "Amplitude",
       Variable =="phi1" ~ "Phase",
-      Variable =="I1" ~ "Mesor"
+      Variable =="I1" ~ "Mean value"
     ))
   
   ## log likelihood test comparing rhythmic to constant
@@ -682,7 +697,7 @@ rhy_plot_bar<-function(LF_data,Type,y_lim,y_lab){
   lm(AUC~1+Genotype*Treatment*sin(2*pi/24*ZT) + Genotype*Treatment*cos(2*pi/24*ZT)+Genotype*Treatment,data=sum_data) -> lm_sGAW
   
   predict_values <- expand.grid(
-    ZT = seq(from=0,to=24,length.out=13),
+    ZT = seq(from=0,to=18,length.out=13),
     Treatment = unique(sum_data$Treatment),
     Genotype = unique(sum_data$Genotype)
     #Animal.ID = unique(sum_data_sGAW$Animal.ID)
