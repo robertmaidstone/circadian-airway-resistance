@@ -56,12 +56,12 @@ anova_pvals_slope_geno %>% filter(PBS<0.05|HDM<0.05)
 
 # plotting dose response curve --------------------------------------------
 
-p1<-dr_plot(LF_data,anova_pvals_slope,mw_results,c(0,1.3),
-            y_lab="Mean crs (mL(cm.H<sub>2</sub>O)<sup>-1</sup>)",
+p1<-dr_plot(LF_data,anova_pvals_slope,mw_results%>% mutate(p.adj=1),c(0,1.3),
+            y_lab="Mean C<sub>rs</sub> (mL(cm.H<sub>2</sub>O)<sup>-1</sup>)",
             x_lab=expression("Methacholine Concentration (mg.mL"^"-1"*")"))
 p1
 
-png("plots_v2/flex_meth_dose_response_LFmaster_crs.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
+png("plots_v4/flex_meth_dose_response_LFmaster_crs.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
 grid.draw(
   p1
 )
@@ -70,34 +70,27 @@ dev.off()
 
 
 # AUC sinusoidal analysis -----------------------------------------------------
+anova_box(LF_data,"AUC") -> anova_auc
 
-rhy_plot_bar(LF_data,"AUC",y_lim=c(-100,50),y_lab="AUC of crs (mL(cm.H<sub>2</sub>O)<sup>-1</sup>)") -> analysis_out
+plot_box(LF_data,"AUC",y_lim=c(-100,50),y_lab="AUC of C<sub>rs</sub> (mL(cm.H<sub>2</sub>O)<sup>-1</sup>)",anova_auc) -> analysis_out
 
-p_auc <- analysis_out$combined
-p_auc
+p_auc <- analysis_out
 
-png("plots_v2/flex_AUC_LFmaster_crs.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
+png("plots_v4/crs_AUC_bar_v3.png", width = 2500, height = 1250, res = 300)  # adjust size/res as needed
 grid.draw(
   p_auc
 )
-grid.text( "WT", y = unit(0.03, "npc"),x = unit(0.175, "npc"), gp = gpar(fontsize = 12))
-grid.text( "CCSP-Reverba KO", y = unit(0.03, "npc"),x = unit(0.4, "npc"), gp = gpar(fontsize = 12))
-grid.text( "WT", y = unit(0.03, "npc"),x = unit(0.66, "npc"), gp = gpar(fontsize = 12))
-grid.text( "CCSP-Reverba KO", y = unit(0.03, "npc"),x = unit(0.875, "npc"), gp = gpar(fontsize = 12))
 dev.off()
+
 # Max sinusoidal analysis -----------------------------------------------------
+anova_box(LF_data,"Max") -> anova_auc
 
-rhy_plot_bar(LF_data,"Max",y_lim=c(-2,2),y_lab="Max crs (mL(cm.H<sub>2</sub>O)<sup>-1</sup>)") -> analysis_out
+plot_box(LF_data,"Max",y_lim=c(-2,2),y_lab="Max C<sub>rs</sub> (mL(cm.H<sub>2</sub>O)<sup>-1</sup>)",anova_auc) -> analysis_out
 
-p_max <- analysis_out$combined
-p_max
+p_auc <- analysis_out
 
-png("plots_v2/flex_max_LFmaster_crs.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
+png("plots_v4/crs_Max_bar_v3.png", width = 2500, height = 1250, res = 300)  # adjust size/res as needed
 grid.draw(
-  p_max
+  p_auc
 )
-grid.text( "WT", y = unit(0.03, "npc"),x = unit(0.175, "npc"), gp = gpar(fontsize = 12))
-grid.text( "CCSP-Reverba KO", y = unit(0.03, "npc"),x = unit(0.4, "npc"), gp = gpar(fontsize = 12))
-grid.text( "WT", y = unit(0.03, "npc"),x = unit(0.66, "npc"), gp = gpar(fontsize = 12))
-grid.text( "CCSP-Reverba KO", y = unit(0.03, "npc"),x = unit(0.875, "npc"), gp = gpar(fontsize = 12))
 dev.off()

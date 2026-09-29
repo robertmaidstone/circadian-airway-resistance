@@ -54,12 +54,12 @@ anova_pvals_slope %>% filter(WT<0.05|KO<0.05)
 anova_pvals_slope_geno %>% filter(PBS<0.05|HDM<0.05)
 # plotting dose response curve --------------------------------------------
 
-p1<-dr_plot(LF_data,anova_pvals_slope,mw_results,c(0,2.25),
+p1<-dr_plot(LF_data,anova_pvals_slope,mw_results%>% mutate(p.adj=1),c(0,2.25),
             y_lab="Mean Rn (cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)",
             x_lab =expression("Methacholine Concentration (mg.mL"^"-1"*")"))
 p1
 
-png("plots_v2/flex_meth_dose_response_LFmaster_RN.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
+png("plots_v4/flex_meth_dose_response_LFmaster_RN.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
 grid.draw(
   p1
 )
@@ -68,33 +68,28 @@ dev.off()
 
 
 # AUC sinusoidal analysis -----------------------------------------------------
+anova_box(LF_data,"AUC") -> anova_auc
 
-rhy_plot_bar(LF_data,"AUC",y_lim=c(-25,25),y_lab="AUC of Rn (cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)") -> analysis_out
+plot_box(LF_data,"AUC",y_lim=c(-100,50),y_lab="AUC of R<sub>n</sub> (cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)",anova_auc) -> analysis_out
 
-p_auc <- analysis_out$combined
-p_auc
-png("plots_v2/flex_Rn_AUC_bar_v3.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
+p_auc <- analysis_out
+
+png("plots_v4/rn_AUC_bar_v3.png", width = 2500, height = 1250, res = 300)  # adjust size/res as needed
 grid.draw(
   p_auc
 )
-grid.text( "WT", y = unit(0.03, "npc"),x = unit(0.175, "npc"), gp = gpar(fontsize = 12))
-grid.text( "CCSP-Reverba KO", y = unit(0.03, "npc"),x = unit(0.4, "npc"), gp = gpar(fontsize = 12))
-grid.text( "WT", y = unit(0.03, "npc"),x = unit(0.66, "npc"), gp = gpar(fontsize = 12))
-grid.text( "CCSP-Reverba KO", y = unit(0.03, "npc"),x = unit(0.875, "npc"), gp = gpar(fontsize = 12))
 dev.off()
 
+
 # Max sinusoidal analysis -----------------------------------------------------
+anova_box(LF_data,"Max") -> anova_auc
 
-rhy_plot_bar(LF_data,"Max",y_lim=c(-.75,.75),y_lab="Max Rn (cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)") -> analysis_out
+plot_box(LF_data,"Max",y_lim=c(-.75,.75),y_lab="Max R<sub>n</sub> (cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)",anova_auc) -> analysis_out
 
-p_max <- analysis_out$combined
-p_max
-png("plots_v2/flex_Rn_max_bar.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
+p_auc <- analysis_out
+
+png("plots_v4/rn_Max_bar_v3.png", width = 2500, height = 1250, res = 300)  # adjust size/res as needed
 grid.draw(
-  p_max
+  p_auc
 )
-grid.text( "WT", y = unit(0.03, "npc"),x = unit(0.175, "npc"), gp = gpar(fontsize = 12))
-grid.text( "CCSP-Reverba KO", y = unit(0.03, "npc"),x = unit(0.4, "npc"), gp = gpar(fontsize = 12))
-grid.text( "WT", y = unit(0.03, "npc"),x = unit(0.66, "npc"), gp = gpar(fontsize = 12))
-grid.text( "CCSP-Reverba KO", y = unit(0.03, "npc"),x = unit(0.875, "npc"), gp = gpar(fontsize = 12))
 dev.off()

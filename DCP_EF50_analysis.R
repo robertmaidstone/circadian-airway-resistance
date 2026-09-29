@@ -47,22 +47,22 @@ anova_pvals_slope_geno %>% filter(PBS<0.05|HDM<0.05)
 # plotting dose response curve --------------------------------------------
 
 
-p1<-dr_plot(LF_data,anova_pvals_slope,mw_results,c(1,2.5),
+p1<-dr_plot(LF_data,anova_pvals_slope,mw_results%>% mutate(p.adj=1),c(1,2.5),
             y_lab="Mean EF50 (ml.sec<sup>-1</sup>)",
             x_lab=expression("Methacholine Concentration (mg.mL"^"-1"*")"))
 p1
-png("plots_v3/ef50_meth_dose_response.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
+png("plots_v4/ef50_meth_dose_response.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
 grid.draw(
   p1
 )
 #grid.text( expression("Methacholine Concentration (mg.mL"^"-1"*")"), y = unit(0.015, "npc"), gp = gpar(fontsize = 12))
 dev.off()
 
-p1<-dr_plot(LF_data,anova_pvals_slope,mw_results,c(0.5,3),
+p1<-dr_plot(LF_data,anova_pvals_slope,mw_results%>% mutate(p.adj=1),c(0.5,3),
             y_lab="Mean EF50 (ml.sec<sup>-1</sup>)",
             x_lab=expression("Methacholine Concentration (mg.mL"^"-1"*")"),errorbar = T)
 p1
-png("plots_v3/ef50_meth_dose_response_eb.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
+png("plots_v4/ef50_meth_dose_response_eb.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
 grid.draw(
   p1
 )

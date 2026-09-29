@@ -44,12 +44,12 @@ anova_pvals_slope_geno %>% filter(PBS<0.05|HDM<0.05)
 
 # plotting dose response curve --------------------------------------------
 
-p1 <- dr_plot(LF_data,anova_pvals_slope,mw_results,c(1.5,7.5),
+p1 <- dr_plot(LF_data,anova_pvals_slope,mw_results%>% mutate(p.adj=1),c(1.5,7.5),
               y_lab="Mean sRAW (cm.H<sub>2</sub>O.sec)",
               x_lab=expression("Methacholine Concentration (mg.mL"^"-1"*")"))
 p1
 
-png("plots_v3/sRAW_meth_dose_response.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
+png("plots_v4/sRAW_meth_dose_response.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
 grid.draw(
     patchworkGrob(p1)
 )
@@ -63,12 +63,12 @@ grid.text(
 #grid.text( expression("Methacholine Concentration (mg.mL"^"-1"*")"), y = unit(0.015, "npc"), gp = gpar(fontsize = 12))
 dev.off()
 
-p1 <- dr_plot(LF_data,anova_pvals_slope,mw_results,c(1.5,8),
+p1 <- dr_plot(LF_data,anova_pvals_slope,mw_results%>% mutate(p.adj=1),c(1.5,8),
               y_lab="Mean sRAW (cm.H<sub>2</sub>O.sec)",
               x_lab=expression("Methacholine Concentration (mg.mL"^"-1"*")"),errorbar = T)
 p1
 
-png("plots_v3/sRAW_meth_dose_response_eb.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
+png("plots_v4/sRAW_meth_dose_response_eb.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
 grid.draw(
   patchworkGrob(p1)
 )
@@ -84,31 +84,28 @@ dev.off()
 
 # AUC sinusoidal analysis -----------------------------------------------------
 
-rhy_plot_bar(LF_data,"AUC",y_lim=c(0,22),y_lab="AUC of sRAW (cm.H<sub>2</sub>O.sec)") -> analysis_out
+anova_box(LF_data,"AUC") -> anova_auc
 
-analysis_out$combined
-p_auc <- analysis_out$combined
-png("plots_v3/sRAW_AUC_bar_v3.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
+plot_box(LF_data,"AUC",y_lim=c(0,22),y_lab="AUC of sRAW (cm.H<sub>2</sub>O.sec)",anova_auc) -> analysis_out
+
+p_auc <- analysis_out
+
+png("plots_v4/sRAW_AUC_bar_v3.png", width = 2500, height = 1250, res = 300)  # adjust size/res as needed
 grid.draw(
   p_auc
 )
-grid.text( "WT", y = unit(0.03, "npc"),x = unit(0.175, "npc"), gp = gpar(fontsize = 12))
-grid.text( "CCSP-Reverba KO", y = unit(0.03, "npc"),x = unit(0.4, "npc"), gp = gpar(fontsize = 12))
-grid.text( "WT", y = unit(0.03, "npc"),x = unit(0.66, "npc"), gp = gpar(fontsize = 12))
-grid.text( "CCSP-Reverba KO", y = unit(0.03, "npc"),x = unit(0.875, "npc"), gp = gpar(fontsize = 12))
 dev.off()
+
 # Max sinusoidal analysis -----------------------------------------------------
+anova_box(LF_data,"Max") -> anova_auc
 
-rhy_plot_bar(LF_data,"Max",y_lim=c(-.1,1.2),y_lab="Max sRAW (cm.H<sub>2</sub>O.sec)") -> analysis_out
+plot_box(LF_data,"Max",y_lim=c(-.1,1.2),y_lab="Max sRAW (cm.H<sub>2</sub>O.sec)",anova_auc) -> analysis_out
 
-analysis_out$combined
-p_max <- analysis_out$combined
-png("plots_v3/sRAW_max.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
+p_auc <- analysis_out
+
+png("plots_v4/sRAW_Max_bar_v3.png", width = 2500, height = 1250, res = 300)  # adjust size/res as needed
 grid.draw(
-  p_max
+  p_auc
 )
-grid.text( "WT", y = unit(0.03, "npc"),x = unit(0.175, "npc"), gp = gpar(fontsize = 12))
-grid.text( "CCSP-Reverba KO", y = unit(0.03, "npc"),x = unit(0.4, "npc"), gp = gpar(fontsize = 12))
-grid.text( "WT", y = unit(0.03, "npc"),x = unit(0.66, "npc"), gp = gpar(fontsize = 12))
-grid.text( "CCSP-Reverba KO", y = unit(0.03, "npc"),x = unit(0.875, "npc"), gp = gpar(fontsize = 12))
 dev.off()
+

@@ -37,22 +37,22 @@ anova_pvals_slope_geno %>% filter(PBS<0.05|HDM<0.05)
 
 # plotting dose response curve --------------------------------------------
 
-p1<-dr_plot(LF_data,anova_pvals_slope,mw_results,c(0.7,5.7),
+p1<-dr_plot(LF_data,anova_pvals_slope,mw_results%>% mutate(p.adj=1),c(0.7,5.7),
             y_lab="Mean Airway Resistance R<sub>rs</sub>(cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)",
             x_lab=expression("Methacholine Concentration (mg.mL"^"-1"*")"))
 p1
 
-png("plots_v3/flex_meth_dose_response.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
+png("plots_v4/flex_meth_dose_response.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
 grid.draw(
   p1
 )
 dev.off()
-p1<-dr_plot(LF_data,anova_pvals_slope,mw_results,c(0.7,8),
+p1<-dr_plot(LF_data,anova_pvals_slope,mw_results%>% mutate(p.adj=1),c(0.7,8),
             y_lab="Mean Airway Resistance R<sub>rs</sub>(cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)",
             x_lab=expression("Methacholine Concentration (mg.mL"^"-1"*")"), errorbar = T)
 p1
 
-png("plots_v3/flex_meth_dose_response_eb.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
+png("plots_v4/flex_meth_dose_response_eb.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
 grid.draw(
   p1
 )
@@ -62,35 +62,31 @@ dev.off()
 
 # AUC sinusoidal analysis -----------------------------------------------------
 
-rhy_plot_bar(LF_data,"AUC",y_lim=c(-6,50),y_lab="AUC of Airway Resistance R<sub>rs</sub>(cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)") -> analysis_out
+anova_box(LF_data,"AUC") -> anova_auc
 
-p_auc <- analysis_out$combined
+plot_box(LF_data,"AUC",y_lim=c(-6,50),y_lab="AUC of Airway Resistance R<sub>rs</sub>(cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)",anova_auc) -> analysis_out
+
+p_auc <- analysis_out
 #ggsave(p_auc,filename="plots_v2/flex_AUC_bar_v2.png",width=10,height=5)
 
-png("plots_v3/flex_AUC_bar_v3.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
+png("plots_v4/flex_AUC_bar_v3.png", width = 2500, height = 1250, res = 300)  # adjust size/res as needed
 grid.draw(
   p_auc
 )
-grid.text( "WT", y = unit(0.03, "npc"),x = unit(0.175, "npc"), gp = gpar(fontsize = 12))
-grid.text( "CCSP-Reverba KO", y = unit(0.03, "npc"),x = unit(0.4, "npc"), gp = gpar(fontsize = 12))
-grid.text( "WT", y = unit(0.03, "npc"),x = unit(0.66, "npc"), gp = gpar(fontsize = 12))
-grid.text( "CCSP-Reverba KO", y = unit(0.03, "npc"),x = unit(0.875, "npc"), gp = gpar(fontsize = 12))
 dev.off()
 
 
 # Max sinusoidal analysis -----------------------------------------------------
 
-rhy_plot_bar(LF_data,"Max",y_lim=c(-.1,1.3),y_lab="Max Airway Resistance R<sub>rs</sub>(cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)") -> analysis_out
+anova_box(LF_data,"Max") -> anova_auc
 
-p_max <- analysis_out$combined
-#ggsave(p_max,filename="plots_v2/flex_max.png",width=10,height=5)
+plot_box(LF_data,"Max",y_lim=c(-.1,1.3),y_lab="Max Airway Resistance R<sub>rs</sub>(cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)",anova_auc) -> analysis_out
 
-png("plots_v3/flex_max.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
+p_auc <- analysis_out
+#ggsave(p_auc,filename="plots_v2/flex_AUC_bar_v2.png",width=10,height=5)
+
+png("plots_v4/flex_max_bar_v3.png", width = 2500, height = 1250, res = 300)  # adjust size/res as needed
 grid.draw(
-  p_max
+  p_auc
 )
-grid.text( "WT", y = unit(0.03, "npc"),x = unit(0.175, "npc"), gp = gpar(fontsize = 12))
-grid.text( "CCSP-Reverba KO", y = unit(0.03, "npc"),x = unit(0.4, "npc"), gp = gpar(fontsize = 12))
-grid.text( "WT", y = unit(0.03, "npc"),x = unit(0.66, "npc"), gp = gpar(fontsize = 12))
-grid.text( "CCSP-Reverba KO", y = unit(0.03, "npc"),x = unit(0.875, "npc"), gp = gpar(fontsize = 12))
 dev.off()
