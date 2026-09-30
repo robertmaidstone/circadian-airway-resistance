@@ -1,6 +1,8 @@
 data/
 plots/
 plots_v2/
+plots_v3/
+plots_v4/
 .Rproj.user
 .Rhistory
 README.html
