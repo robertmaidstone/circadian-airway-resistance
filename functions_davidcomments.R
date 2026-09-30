@@ -357,7 +357,7 @@ dr_plot <- function(LF_data,
       scale_linetype_manual(name = "Treatment",
                             values = c("PBS" = "solid", "HDM" = "dashed"),
                             #labels = c("PBS" = "#   PBS", "HDM" = "*   HDM"))
-                            labels = c("PBS" = "PBS", "HDM" = "HDM"))
+                            labels = c("PBS" = "# PBS", "HDM" = "* HDM"))
     # Add right‑side brackets
     p1 <- p1 +
       geom_segment(
@@ -1022,6 +1022,107 @@ anova_box <- function(LF_data,Type){
   lm(data=sum_data,AUC~Genotype*Treatment*ZT) %>% anova -> ll
   data.frame(Test=c("Genotype","Treatment","Time","Genotype x Treatment x Time"),
              pval=ll[c("Genotype","Treatment","ZT","Genotype:Treatment:ZT"),"Pr(>F)"]) %>%
+    mutate(pvalplot=ifelse(pval>0.05,"ns",ifelse(pval<0.01,"<0.01",round(pval,2))))
+  
+}
+
+######
+plot_bar_geno <- function(LF_data,Type,GT,y_lim,y_lab,anova){
+  
+  sig_text <- paste((anova %>% mutate(text=paste(Test,pvalplot,sep=": ")))$text,sep="\n",collapse = "\n")
+  
+  LF_data %>% 
+    mutate(Value=log10(Value)) %>%
+    arrange(across(all_of(c("Sample", "ZT", "Genotype", "Treatment"))), Mch_conc) %>%
+    group_by(Sample,ZT,Genotype,Treatment) %>%
+    mutate(Max_Value=max(Value,na.rm=T)) %>%
+    mutate(Min_Value=min(Value,na.rm=T)) %>%
+    mutate(AUC = sum(diff(Mch_conc) * (Value[-1] + Value[-length(Value)]) / 2)) %>%
+    #mutate(AUC = sum(diff(Mch_conc) * (Value[-1] + Value[-4]) / 2,na.rm=T)) %>%
+    dplyr::select(Sample,Max_Value,Min_Value,AUC) %>%
+    distinct %>% ungroup -> sum_data
+  if(Type=="Max"){
+    sum_data <- sum_data %>% mutate(AUC=Max_Value)
+    #y_lab <- "Max Airway Resistance R<sub>rs</sub>(cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)"
+  }else if(Type=="Min"){
+    sum_data <- sum_data %>% mutate(AUC=Min_Value)
+    #y_lab<-"Min Airway Resistance R<sub>rs</sub>(cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)"
+  }else if(Type=="AUC"){
+    # y_lab<-"AUC Airway Resistance R<sub>rs</sub>(cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)"
+  }else{
+    stop("Error type not recognised")
+  }
+  
+  ggplot(sum_data %>% 
+           filter(Genotype==GT) %>%
+           mutate(ZT_loc=ifelse(Treatment=="PBS",ZT,ZT+30)),
+         aes(x=ZT_loc,y=AUC,group=paste0(Treatment,ZT)))+
+    stat_summary(
+      fun = mean,
+      geom = "col",
+      colour = "grey",
+      fill = "grey90"
+    ) +
+    geom_point(position=position_jitter(width=0.5),size=2)+
+    stat_summary(
+      fun.data = mean_se,
+      geom = "errorbar",
+      width = 2,
+      colour = "black"
+    ) +
+    geom_hline(yintercept = 0,color = "grey",size=.75)+
+    # stat_summary(
+    #   fun = mean,
+    #   geom = "point",
+    #   shape = 95, # horizontal dash
+    #   size = 5,
+    #   colour = "black"
+    # ) +
+    #scale_colour_manual(values=rev(c("#0072B2", "#E69F00")))+
+    #scale_shape_manual(values=c(16, 1)) +
+    scale_x_continuous(    breaks = seq(0,48,by=6),
+                           labels = rep(c("ZT0","ZT6","ZT12","ZT18",""),2)[-10]) +
+    annotate("text", x = -2, y = max(y_lim), label = sig_text,
+             hjust = 0, vjust = 1, size = 4) +
+    theme_classic() +
+    ylab(y_lab)+
+    xlab("") + 
+    theme(
+      axis.title.x = element_blank(),
+      axis.title.y = element_markdown(),
+      legend.position = "none"#,
+      #plot.margin = margin(20, 10, 40, 10)
+    )  
+}
+
+
+anova_geno <- function(LF_data,Type,GT){
+  LF_data %>% 
+    mutate(Value=log10(Value)) %>%
+    arrange(across(all_of(c("Sample", "ZT", "Genotype", "Treatment"))), Mch_conc) %>%
+    group_by(Sample,ZT,Genotype,Treatment) %>%
+    mutate(Max_Value=max(Value,na.rm=T)) %>%
+    mutate(Min_Value=min(Value,na.rm=T)) %>%
+    mutate(AUC = sum(diff(Mch_conc) * (Value[-1] + Value[-length(Value)]) / 2)) %>%
+    #mutate(AUC = sum(diff(Mch_conc) * (Value[-1] + Value[-4]) / 2,na.rm=T)) %>%
+    dplyr::select(Sample,Max_Value,Min_Value,AUC) %>%
+    distinct %>% ungroup %>%
+    mutate(ZT=as.character(ZT)) -> sum_data
+  if(Type=="Max"){
+    sum_data <- sum_data %>% mutate(AUC=Max_Value)
+    #y_lab <- "Max Airway Resistance R<sub>rs</sub>(cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)"
+  }else if(Type=="Min"){
+    sum_data <- sum_data %>% mutate(AUC=Min_Value)
+    #y_lab<-"Min Airway Resistance R<sub>rs</sub>(cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)"
+  }else if(Type=="AUC"){
+    # y_lab<-"AUC Airway Resistance R<sub>rs</sub>(cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)"
+  }else{
+    stop("Error type not recognised")
+  }
+  
+  lm(data=sum_data%>% filter(Genotype==GT),AUC~Treatment*ZT) %>% anova -> ll
+  data.frame(Test=c("Treatment","Time","Treatment x Time"),
+             pval=ll[c("Treatment","ZT","Treatment:ZT"),"Pr(>F)"]) %>%
     mutate(pvalplot=ifelse(pval>0.05,"ns",ifelse(pval<0.01,"<0.01",round(pval,2))))
   
 }
