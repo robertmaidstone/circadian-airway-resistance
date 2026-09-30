@@ -69,13 +69,13 @@ plot_bar_geno(LF_data,"AUC","WT",y_lim=c(-6,50),y_lab="AUC of Airway Resistance 
 p_auc <- analysis_out
 #ggsave(p_auc,filename="plots_v2/flex_AUC_bar_v2.png",width=10,height=5)
 
-png("plots_v4/flex_AUC_bar_v3.png", width = 1500, height = 1250, res = 300)  # adjust size/res as needed
+png("plots_v4/flex_AUC_bar_WT.png", width = 1500, height = 1250, res = 300)  # adjust size/res as needed
 grid.draw(
   p_auc + theme(
     plot.margin = margin(
       t = 10,
       r = 10,
-      b = 30, # increase bottom margin
+      b = 25, # increase bottom margin
       l = 10
     ))
 )
@@ -97,7 +97,7 @@ grid.draw(
     plot.margin = margin(
       t = 10,
       r = 10,
-      b = 30, # increase bottom margin
+      b = 25, # increase bottom margin
       l = 10
     ))
 )
@@ -120,7 +120,7 @@ grid.draw(
     plot.margin = margin(
       t = 10,
       r = 10,
-      b = 30, # increase bottom margin
+      b = 25, # increase bottom margin
       l = 10
     ))
 )
@@ -143,7 +143,7 @@ grid.draw(
     plot.margin = margin(
       t = 10,
       r = 10,
-      b = 30, # increase bottom margin
+      b = 25, # increase bottom margin
       l = 10
     ))
 )

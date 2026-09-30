@@ -1031,6 +1031,8 @@ plot_bar_geno <- function(LF_data,Type,GT,y_lim,y_lab,anova){
   
   sig_text <- paste((anova %>% mutate(text=paste(Test,pvalplot,sep=": ")))$text,sep="\n",collapse = "\n")
   
+  bar_col<-ifelse(GT=="WT","#0072B2", "#E69F00")
+  
   LF_data %>% 
     mutate(Value=log10(Value)) %>%
     arrange(across(all_of(c("Sample", "ZT", "Genotype", "Treatment"))), Mch_conc) %>%
@@ -1060,17 +1062,17 @@ plot_bar_geno <- function(LF_data,Type,GT,y_lim,y_lab,anova){
     stat_summary(
       fun = mean,
       geom = "col",
-      colour = "grey",
-      fill = "grey90"
+      colour = "black",
+      fill = bar_col
     ) +
-    geom_point(position=position_jitter(width=0.5),size=2)+
+    geom_point(position=position_jitter(width=0.5),size=2,shape=1)+
     stat_summary(
       fun.data = mean_se,
       geom = "errorbar",
       width = 2,
       colour = "black"
     ) +
-    geom_hline(yintercept = 0,color = "grey",size=.75)+
+    geom_hline(yintercept = 0,color = "black",size=.75)+
     # stat_summary(
     #   fun = mean,
     #   geom = "point",

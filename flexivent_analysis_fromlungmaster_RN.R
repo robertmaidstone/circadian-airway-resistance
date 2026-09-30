@@ -54,7 +54,7 @@ anova_pvals_slope %>% filter(WT<0.05|KO<0.05)
 anova_pvals_slope_geno %>% filter(PBS<0.05|HDM<0.05)
 # plotting dose response curve --------------------------------------------
 
-p1<-dr_plot(LF_data,anova_pvals_slope,mw_results%>% mutate(p.adj=1),c(0,2.25),
+p1<-dr_plot(LF_data,anova_pvals_slope,mw_results,c(0,2.25),
             y_lab="Mean Rn (cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)",
             x_lab =expression("Methacholine Concentration (mg.mL"^"-1"*")"))
 p1
@@ -68,28 +68,85 @@ dev.off()
 
 
 # AUC sinusoidal analysis -----------------------------------------------------
-anova_box(LF_data,"AUC") -> anova_auc
+anova_geno(LF_data,"AUC","WT") -> anova_auc
 
-plot_box(LF_data,"AUC",y_lim=c(-100,50),y_lab="AUC of R<sub>n</sub> (cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)",anova_auc) -> analysis_out
+plot_bar_geno(LF_data,"AUC","WT",y_lim=c(-100,50),y_lab="AUC of R<sub>n</sub> (cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)",anova_auc) -> analysis_out
 
 p_auc <- analysis_out
 
-png("plots_v4/rn_AUC_bar_v3.png", width = 2500, height = 1250, res = 300)  # adjust size/res as needed
+png("plots_v4/rn_AUC_bar_WT.png", width = 1500, height = 1250, res = 300)  # adjust size/res as needed
 grid.draw(
-  p_auc
+  p_auc + theme(
+    plot.margin = margin(
+      t = 10,
+      r = 10,
+      b = 25, # increase bottom margin
+      l = 10
+    ))
 )
+grid.text( "PBS", y = unit(0.03, "npc"),x = unit(0.33, "npc"), gp = gpar(fontsize = 12))
+grid.text( "HDM", y = unit(0.03, "npc"),x = unit(0.76, "npc"), gp = gpar(fontsize = 12))
+dev.off()
+##
+anova_geno(LF_data,"AUC","KO") -> anova_auc
+
+plot_bar_geno(LF_data,"AUC","KO",y_lim=c(-100,50),y_lab="AUC of R<sub>n</sub> (cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)",anova_auc) -> analysis_out
+
+p_auc <- analysis_out
+
+png("plots_v4/rn_AUC_bar_KO.png", width = 1500, height = 1250, res = 300)  # adjust size/res as needed
+grid.draw(
+  p_auc + theme(
+    plot.margin = margin(
+      t = 10,
+      r = 10,
+      b = 25, # increase bottom margin
+      l = 10
+    ))
+)
+grid.text( "PBS", y = unit(0.03, "npc"),x = unit(0.33, "npc"), gp = gpar(fontsize = 12))
+grid.text( "HDM", y = unit(0.03, "npc"),x = unit(0.76, "npc"), gp = gpar(fontsize = 12))
 dev.off()
 
 
 # Max sinusoidal analysis -----------------------------------------------------
-anova_box(LF_data,"Max") -> anova_auc
+anova_geno(LF_data,"Max","WT") -> anova_auc
 
-plot_box(LF_data,"Max",y_lim=c(-.75,.75),y_lab="Max R<sub>n</sub> (cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)",anova_auc) -> analysis_out
+plot_bar_geno(LF_data,"Max","WT",y_lim=c(-.75,.75),y_lab="Max R<sub>n</sub> (cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)",anova_auc) -> analysis_out
 
 p_auc <- analysis_out
 
-png("plots_v4/rn_Max_bar_v3.png", width = 2500, height = 1250, res = 300)  # adjust size/res as needed
+png("plots_v4/rn_Max_bar_WT.png", width = 1500, height = 1250, res = 300)  # adjust size/res as needed
 grid.draw(
-  p_auc
+  p_auc + theme(
+    plot.margin = margin(
+      t = 10,
+      r = 10,
+      b = 25, # increase bottom margin
+      l = 10
+    ))
 )
+grid.text( "PBS", y = unit(0.03, "npc"),x = unit(0.33, "npc"), gp = gpar(fontsize = 12))
+grid.text( "HDM", y = unit(0.03, "npc"),x = unit(0.76, "npc"), gp = gpar(fontsize = 12))
+dev.off()
+
+##
+anova_geno(LF_data,"Max","KO") -> anova_auc
+
+plot_bar_geno(LF_data,"Max","KO",y_lim=c(-.75,.75),y_lab="Max R<sub>n</sub> (cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)",anova_auc) -> analysis_out
+
+p_auc <- analysis_out
+
+png("plots_v4/rn_Max_bar_KO.png", width = 1500, height = 1250, res = 300)  # adjust size/res as needed
+grid.draw(
+  p_auc + theme(
+    plot.margin = margin(
+      t = 10,
+      r = 10,
+      b = 25, # increase bottom margin
+      l = 10
+    ))
+)
+grid.text( "PBS", y = unit(0.03, "npc"),x = unit(0.33, "npc"), gp = gpar(fontsize = 12))
+grid.text( "HDM", y = unit(0.03, "npc"),x = unit(0.76, "npc"), gp = gpar(fontsize = 12))
 dev.off()
