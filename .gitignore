@@ -3,6 +3,7 @@ plots/
 plots_v2/
 plots_v3/
 plots_v4/
+plots*
 *.zip
 .Rproj.user
 .Rhistory
