@@ -59,14 +59,24 @@ p1<-dr_plot(LF_data,anova_pvals_slope,mw_results,c(0,2.25),
             x_lab =expression("Methacholine Concentration (mg.mL"^"-1"*")"))
 p1
 
-png("plots_v4/flex_meth_dose_response_LFmaster_RN.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
+png("plots_v4/rn_meth_dose_response.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
 grid.draw(
   p1
 )
 #grid.text( expression("Methacholine Concentration (mg.mL"^"-1"*")"), y = unit(0.03, "npc"), gp = gpar(fontsize = 12))
 dev.off()
 
+p1<-dr_plot(LF_data,anova_pvals_slope,mw_results,c(0,2.25),
+            y_lab="Mean Rn (cm.H<sub>2</sub>O.s.ml<sup>-1</sup>)",
+            x_lab =expression("Methacholine Concentration (mg.mL"^"-1"*")"),errorbar = T)
+p1
 
+png("plots_v4/rn_meth_dose_response_eb.png", width = 3000, height = 1500, res = 300)  # adjust size/res as needed
+grid.draw(
+  p1
+)
+#grid.text( expression("Methacholine Concentration (mg.mL"^"-1"*")"), y = unit(0.03, "npc"), gp = gpar(fontsize = 12))
+dev.off()
 # AUC sinusoidal analysis -----------------------------------------------------
 anova_geno(LF_data,"AUC","WT") -> anova_auc
 

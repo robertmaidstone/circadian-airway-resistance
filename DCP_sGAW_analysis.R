@@ -43,7 +43,7 @@ anova_pvals_slope_geno %>% filter(PBS<0.05|HDM<0.05)
 
 # plotting dose response curve --------------------------------------------
 
-p1<-dr_plot(LF_data,anova_pvals_slope,mw_results%>% mutate(p.adj=1),c(.2,.8),
+p1<-dr_plot(LF_data,anova_pvals_slope,mw_results,c(.2,.8),
             y_lab="Median sGAW (cm.H<sub>2</sub>O.sec<sup>-1</sup>)",
             x_lab=expression("Methacholine Concentration (mg.mL"^"-1"*")"))
 p1
@@ -56,7 +56,7 @@ grid.draw(
 dev.off()
 
 
-p1<-dr_plot(LF_data,anova_pvals_slope,mw_results%>% mutate(p.adj=1),c(0.13,1),
+p1<-dr_plot(LF_data,anova_pvals_slope,mw_results,c(0.13,1),
             y_lab="Median sGAW (cm.H<sub>2</sub>O.sec<sup>-1</sup>)",
             x_lab=expression("Methacholine Concentration (mg.mL"^"-1"*")"),errorbar = T)
 p1
@@ -70,28 +70,85 @@ dev.off()
 
 # AUC sinusoidal analysis -----------------------------------------------------
 
-anova_box(LF_data,"AUC") -> anova_auc
+anova_geno(LF_data,"AUC","WT") -> anova_auc
 
-plot_box(LF_data,"AUC",y_lim=c(-17.5,2),y_lab="AUC of sGAW (cm.H<sub>2</sub>O.sec<sup>-1</sup>)",anova_auc) -> analysis_out
+plot_bar_geno(LF_data,"AUC","WT",y_lim=c(-17.5,5),y_lab="AUC of sGAW (cm.H<sub>2</sub>O.sec<sup>-1</sup>)",anova_auc) -> analysis_out
 
 p_auc <- analysis_out
 
-png("plots_v4/sGAW_AUC_bar_v3.png", width = 2500, height = 1250, res = 300)  # adjust size/res as needed
+png("plots_v4/sGAW_AUC_bar_WT.png", width = 1500, height = 1250, res = 300)  # adjust size/res as needed
 grid.draw(
-  p_auc
+  p_auc + theme(
+    plot.margin = margin(
+      t = 10,
+      r = 10,
+      b = 25, # increase bottom margin
+      l = 10
+    ))
 )
+grid.text( "PBS", y = unit(0.03, "npc"),x = unit(0.33, "npc"), gp = gpar(fontsize = 12))
+grid.text( "HDM", y = unit(0.03, "npc"),x = unit(0.76, "npc"), gp = gpar(fontsize = 12))
+dev.off()
+##
+
+anova_geno(LF_data,"AUC","KO") -> anova_auc
+
+plot_bar_geno(LF_data,"AUC","KO",y_lim=c(-17.5,5),y_lab="AUC of sGAW (cm.H<sub>2</sub>O.sec<sup>-1</sup>)",anova_auc) -> analysis_out
+
+p_auc <- analysis_out
+
+png("plots_v4/sGAW_AUC_bar_KO.png", width = 1500, height = 1250, res = 300)  # adjust size/res as needed
+grid.draw(
+  p_auc + theme(
+    plot.margin = margin(
+      t = 10,
+      r = 10,
+      b = 25, # increase bottom margin
+      l = 10
+    ))
+)
+grid.text( "PBS", y = unit(0.03, "npc"),x = unit(0.33, "npc"), gp = gpar(fontsize = 12))
+grid.text( "HDM", y = unit(0.03, "npc"),x = unit(0.76, "npc"), gp = gpar(fontsize = 12))
 dev.off()
 
 # Max sinusoidal analysis -----------------------------------------------------
 
-anova_box(LF_data,"Min") -> anova_auc
+anova_geno(LF_data,"Min","WT") -> anova_auc
 
-plot_box(LF_data,"Min",y_lim=c(-1,0.1),y_lab="Min sGAW (cm.H<sub>2</sub>O.sec<sup>-1</sup>)",anova_auc) -> analysis_out
+plot_bar_geno(LF_data,"Min","WT",y_lim=c(-1,0.3),y_lab="Min sGAW (cm.H<sub>2</sub>O.sec<sup>-1</sup>)",anova_auc) -> analysis_out
 
 p_auc <- analysis_out
 
-png("plots_v4/sGAW_Min_bar_v3.png", width = 2500, height = 1250, res = 300)  # adjust size/res as needed
+png("plots_v4/sGAW_Min_bar_WT.png", width = 1500, height = 1250, res = 300)  # adjust size/res as needed
 grid.draw(
-  p_auc
+  p_auc + theme(
+    plot.margin = margin(
+      t = 10,
+      r = 10,
+      b = 25, # increase bottom margin
+      l = 10
+    ))
 )
+grid.text( "PBS", y = unit(0.03, "npc"),x = unit(0.33, "npc"), gp = gpar(fontsize = 12))
+grid.text( "HDM", y = unit(0.03, "npc"),x = unit(0.76, "npc"), gp = gpar(fontsize = 12))
+dev.off()
+##
+anova_geno(LF_data,"Min","KO") -> anova_auc
+
+plot_bar_geno(LF_data,"Min","KO",y_lim=c(-1,0.3),y_lab="Min sGAW (cm.H<sub>2</sub>O.sec<sup>-1</sup>)",anova_auc) -> analysis_out
+
+p_auc <- analysis_out
+
+png("plots_v4/sGAW_Min_bar_KO.png", width = 1500, height = 1250, res = 300)  # adjust size/res as needed
+grid.draw(
+  p_auc + theme(
+    plot.margin = margin(
+      t = 10,
+      r = 10,
+      b = 25, # increase bottom margin
+      l = 10
+    ))
+)
+grid.text( "PBS", y = unit(0.03, "npc"),x = unit(0.33, "npc"), gp = gpar(fontsize = 12))
+grid.text( "HDM", y = unit(0.03, "npc"),x = unit(0.76, "npc"), gp = gpar(fontsize = 12))
 dev.off()
